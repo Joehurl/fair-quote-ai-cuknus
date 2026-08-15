@@ -2,6 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { Slot } from 'expo-router';
 import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
+import { useSubscriptionGuard } from "@/hooks/useSubscriptionGuard";
 
 const TABS: TabBarItem[] = [
   {
@@ -25,6 +26,8 @@ const TABS: TabBarItem[] = [
 ];
 
 export default function TabLayout() {
+  useSubscriptionGuard();
+
   return (
     <View style={{ flex: 1 }}>
       <Slot />

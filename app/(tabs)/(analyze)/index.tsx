@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CheckCircle, AlertCircle, HelpCircle, TrendingDown, ChevronRight } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { CheckCircle, AlertCircle, HelpCircle, TrendingDown } from 'lucide-react-native';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { analyzeQuote, AnalysisResult } from '@/utils/quoteAnalyzer';
 import { saveQuote, SavedQuote } from '@/utils/storage';
+import { useSubscription } from '@/contexts/SubscriptionContext';
+import { getCredits, deductCredit } from '@/utils/creditsStorage';
 
 const COLORS = {
   background: '#F0F4F8',
@@ -36,6 +39,8 @@ const COLORS = {
   uncertain: '#D69E2E',
   uncertainMuted: 'rgba(214, 158, 46, 0.12)',
 };
+
+// ─── Skeleton ────────────────────────────────────────────────────────────────
 
 function SkeletonLine({ width, height = 14 }: { width: number | string; height?: number }) {
   const opacity = useRef(new Animated.Value(0.3)).current;
@@ -74,7 +79,6 @@ function AnalysisSkeleton() {
         padding: 20,
         borderWidth: 1,
         borderColor: COLORS.border,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
         gap: 16,
       }}
     >
@@ -96,6 +100,8 @@ function AnalysisSkeleton() {
     </View>
   );
 }
+
+// ─── Verdict Badge ────────────────────────────────────────────────────────────
 
 function VerdictBadge({ verdict }: { verdict: AnalysisResult['verdict'] }) {
   const config = {
@@ -135,9 +141,16 @@ function VerdictBadge({ verdict }: { verdict: AnalysisResult['verdict'] }) {
   );
 }
 
+// ─── Confidence Bar ───────────────────────────────────────────────────────────
+
 function ConfidenceBar({ confidence, verdict }: { confidence: number; verdict: AnalysisResult['verdict'] }) {
   const fillAnim = useRef(new Animated.Value(0)).current;
-  const barColor = verdict === 'fair' || verdict === 'underpriced' ? COLORS.fair : verdict === 'overpriced' ? COLORS.overpriced : COLORS.uncertain;
+  const barColor =
+    verdict === 'fair' || verdict === 'underpriced'
+      ? COLORS.fair
+      : verdict === 'overpriced'
+      ? COLORS.overpriced
+      : COLORS.uncertain;
 
   React.useEffect(() => {
     Animated.timing(fillAnim, {
@@ -183,6 +196,8 @@ function ConfidenceBar({ confidence, verdict }: { confidence: number; verdict: A
   );
 }
 
+// ─── Result Card ──────────────────────────────────────────────────────────────
+
 function ResultCard({
   result,
   amount,
@@ -212,9 +227,10 @@ function ResultCard({
     ]).start();
   }, [opacityAnim, slideAnim]);
 
-  const rangeText = result.estimatedLow > 0
-    ? `$${result.estimatedLow.toLocaleString()} – $${result.estimatedHigh.toLocaleString()}`
-    : 'Not available';
+  const rangeText =
+    result.estimatedLow > 0
+      ? `$${result.estimatedLow.toLocaleString()} – $${result.estimatedHigh.toLocaleString()}`
+      : 'Not available';
 
   return (
     <Animated.View
@@ -230,7 +246,6 @@ function ResultCard({
           padding: 20,
           borderWidth: 1,
           borderColor: COLORS.border,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
           gap: 16,
         }}
       >
@@ -366,8 +381,58 @@ function ResultCard({
   );
 }
 
+// ─── Status Badge ─────────────────────────────────────────────────────────────
+
+function StatusBadge({ isSubscribed, credits }: { isSubscribed: boolean; credits: number }) {
+  if (isSubscribed) {
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          backgroundColor: 'rgba(56, 161, 105, 0.12)',
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 8,
+        }}
+      >
+        <Text style={{ fontSize: 11, fontWeight: '700', color: COLORS.accent, letterSpacing: 0.5 }}>
+          PRO
+        </Text>
+      </View>
+    );
+  }
+  if (credits > 0) {
+    const creditLabel = credits === 1 ? '1 credit' : `${credits} credits`;
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          backgroundColor: COLORS.primaryMuted,
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 8,
+        }}
+      >
+        <Text style={{ fontSize: 11, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.3 }}>
+          {creditLabel}
+        </Text>
+      </View>
+    );
+  }
+  return null;
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 export default function AnalyzeScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { isSubscribed, loading: subLoading } = useSubscription();
+
   const [description, setDescription] = useState('');
   const [amountText, setAmountText] = useState('');
   const [location, setLocation] = useState('');
@@ -375,8 +440,19 @@ export default function AnalyzeScreen() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
-
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [credits, setCredits] = useState(0);
+
+  // Load credits on mount and when subscription changes
+  useEffect(() => {
+    if (!subLoading) {
+      console.log('[AnalyzeScreen] Loading credits, isSubscribed:', isSubscribed);
+      getCredits().then((c) => {
+        setCredits(c);
+        console.log('[AnalyzeScreen] Credits loaded:', c);
+      });
+    }
+  }, [subLoading, isSubscribed]);
 
   const handleAnalyze = useCallback(async () => {
     const amount = parseFloat(amountText.replace(/[^0-9.]/g, ''));
@@ -391,17 +467,33 @@ export default function AnalyzeScreen() {
       return;
     }
 
+    // Gating check
+    if (!isSubscribed && credits <= 0) {
+      console.log('[AnalyzeScreen] No access — redirecting to paywall');
+      router.push('/paywall');
+      return;
+    }
+
     setIsAnalyzing(true);
     setResult(null);
     setSavedId(null);
+
+    // Deduct credit if not subscribed
+    if (!isSubscribed && credits > 0) {
+      console.log('[AnalyzeScreen] Deducting 1 credit for analysis');
+      const remaining = await deductCredit();
+      setCredits(remaining);
+      console.log('[AnalyzeScreen] Credits remaining after deduction:', remaining);
+    }
 
     // Simulate a brief "thinking" delay for UX
     await new Promise((resolve) => setTimeout(resolve, 900));
 
     const analysisResult = analyzeQuote(description, amount, location, details);
+    console.log('[AnalyzeScreen] Analysis complete, verdict:', analysisResult.verdict);
     setResult(analysisResult);
     setIsAnalyzing(false);
-  }, [description, amountText, location, details]);
+  }, [description, amountText, location, details, isSubscribed, credits, router]);
 
   const handleSave = useCallback(async () => {
     if (!result) return;
@@ -450,6 +542,14 @@ export default function AnalyzeScreen() {
   });
 
   const isFormValid = description.trim().length > 0 && parseFloat(amountText) > 0;
+  const hasAccess = isSubscribed || credits > 0;
+
+  // Determine analyze button label
+  const analyzeButtonLabel = isAnalyzing
+    ? 'Analyzing...'
+    : !hasAccess
+    ? 'Analyze Quote — Unlock'
+    : 'Analyze Quote';
 
   return (
     <KeyboardAvoidingView
@@ -466,10 +566,15 @@ export default function AnalyzeScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Subtitle */}
-        <Text style={{ fontSize: 15, color: COLORS.textSecondary, marginTop: 4 }}>
-          Is your quote fair?
-        </Text>
+        {/* Subtitle row with status badge */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+          <Text style={{ fontSize: 15, color: COLORS.textSecondary }}>
+            Is your quote fair?
+          </Text>
+          {!subLoading && (
+            <StatusBadge isSubscribed={isSubscribed} credits={credits} />
+          )}
+        </View>
 
         {/* Form Card */}
         <View
@@ -479,7 +584,6 @@ export default function AnalyzeScreen() {
             padding: 16,
             borderWidth: 1,
             borderColor: COLORS.border,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03)',
             gap: 16,
           }}
         >
@@ -602,9 +706,16 @@ export default function AnalyzeScreen() {
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : null}
             <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>
-              {isAnalyzing ? 'Analyzing...' : 'Analyze Quote'}
+              {analyzeButtonLabel}
             </Text>
           </AnimatedPressable>
+
+          {/* No-access hint */}
+          {!subLoading && !hasAccess && (
+            <Text style={{ fontSize: 12, color: COLORS.textTertiary, textAlign: 'center', marginTop: -8 }}>
+              Tap to unlock — from $1.99/month or $2.00 per analysis
+            </Text>
+          )}
         </View>
 
         {/* Loading Skeleton */}
