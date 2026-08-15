@@ -92,6 +92,14 @@ export default function RootLayout() {
               <Stack>
                 {/* Main app with tabs */}
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                {/* Quote detail modal */}
+                <Stack.Screen
+                  name="quote-detail"
+                  options={{
+                    presentation: 'formSheet',
+                    headerShown: false,
+                  }}
+                />
               </Stack>
               <SystemBars style={"auto"} />
               </GestureHandlerRootView>
