@@ -24,7 +24,10 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.fairquoteai.app",
-      "versionCode": 2
+      "versionCode": 2,
+      "permissions": [
+        "com.android.vending.BILLING"
+      ]
     },
     "web": {
       "favicon": "./assets/images/newly.png",
