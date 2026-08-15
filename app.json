@@ -4,10 +4,10 @@
     "slug": "fairquote-ai",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/newly.png",
+    "icon": "./assets/images/app-icon-qej.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/newly.png",
+      "image": "./assets/images/app-icon-qej.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
@@ -20,7 +20,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/newly.png",
+        "foregroundImage": "./assets/images/app-icon-qej.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.placeholder.app"
