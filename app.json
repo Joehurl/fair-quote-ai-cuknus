@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "FairQuote AI",
-    "slug": "fairquote-ai",
-    "version": "1.0.0",
+    "slug": "fair-quote-ai-cuknus",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/app-icon-qej.png",
     "userInterfaceStyle": "automatic",
@@ -23,7 +23,8 @@
         "foregroundImage": "./assets/images/app-icon-qej.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.fairquoteai.app"
+      "package": "com.fairquoteai.app",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/images/newly.png",
