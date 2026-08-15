@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "FairQuote AI",
-    "slug": "fair-quote-ai-cuknus",
+    "slug": "fairquote-ai",
     "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/app-icon-qej.png",
