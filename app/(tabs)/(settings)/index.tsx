@@ -8,7 +8,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { ChevronRight, Info, Star, Trash2, X, CheckCircle, BarChart2, Shield, Crown, RefreshCw, XCircle } from 'lucide-react-native';
+import { ChevronRight, Info, Star, Trash2, X, CheckCircle, BarChart2, Shield, Crown, RefreshCw, XCircle, Copyright, ShieldCheck } from 'lucide-react-native';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { clearAllQuotes } from '@/utils/storage';
 import { getCredits } from '@/utils/creditsStorage';
@@ -516,6 +516,29 @@ export default function SettingsScreen() {
             icon={<Shield size={16} color={COLORS.primary} />}
             label="Privacy Policy"
             onPress={handlePrivacyPolicy}
+          />
+          <Divider />
+          <SettingsRow
+            icon={<Copyright size={16} color={COLORS.primary} />}
+            label="Copyright"
+            value="© 2025 Joseph Hurley"
+            showChevron={false}
+            onPress={() => {
+              console.log('[Settings] Copyright pressed');
+              Alert.alert('Copyright', '© 2025 Joseph Hurley. All rights reserved.');
+            }}
+          />
+          <Divider />
+          <SettingsRow
+            icon={<ShieldCheck size={16} color={COLORS.primary} />}
+            label="No Harmful Content"
+            onPress={() => {
+              console.log('[Settings] No Harmful Content pressed');
+              Alert.alert(
+                'No Harmful Content',
+                'FairQuote AI does not contain any of the following:\n\n• No hate speech or discriminatory content\n• No violent, graphic, or disturbing content\n• No adult or sexually explicit content\n• No content targeting or harmful to minors\n• No misleading, deceptive, or fraudulent content\n• No malware, spyware, or malicious code\n• No unauthorized data collection or privacy violations\n• No content that promotes illegal activity\n\nThis app is a consumer tool designed solely to help users evaluate whether service quotes are fair based on market data.'
+              );
+            }}
           />
           <Divider />
           <SettingsRow
