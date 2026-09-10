@@ -8,9 +8,10 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  ScrollView,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Clock, Trash2, CheckCircle, AlertCircle, HelpCircle, TrendingDown, ClipboardList } from 'lucide-react-native';
+import { Clock, Trash2, CheckCircle, AlertCircle, HelpCircle, TrendingDown, ClipboardList, ArrowUpDown } from 'lucide-react-native';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { loadQuotes, deleteQuote, SavedQuote } from '@/utils/storage';
 
@@ -40,6 +41,11 @@ const COLORS = {
   uncertainMuted: 'rgba(214, 158, 46, 0.12)',
 };
 
+type FilterKey = 'All' | 'Fair' | 'Overpriced' | 'Good Deal' | 'Uncertain';
+type SortOrder = 'newest' | 'oldest';
+
+const FILTER_OPTIONS: FilterKey[] = ['All', 'Fair', 'Overpriced', 'Good Deal', 'Uncertain'];
+
 function verdictConfig(verdict: SavedQuote['verdict']) {
   return {
     fair: { label: 'Fair Price', color: COLORS.fair, bg: COLORS.fairMuted, Icon: CheckCircle },
@@ -47,6 +53,15 @@ function verdictConfig(verdict: SavedQuote['verdict']) {
     overpriced: { label: 'Overpriced', color: COLORS.overpriced, bg: COLORS.overpricedMuted, Icon: AlertCircle },
     uncertain: { label: 'Uncertain', color: COLORS.uncertain, bg: COLORS.uncertainMuted, Icon: HelpCircle },
   }[verdict];
+}
+
+function matchesFilter(quote: SavedQuote, filter: FilterKey): boolean {
+  if (filter === 'All') return true;
+  if (filter === 'Fair') return quote.verdict === 'fair';
+  if (filter === 'Overpriced') return quote.verdict === 'overpriced';
+  if (filter === 'Good Deal') return quote.verdict === 'underpriced';
+  if (filter === 'Uncertain') return quote.verdict === 'uncertain';
+  return true;
 }
 
 function formatRelativeDate(isoDate: string): string {
@@ -154,6 +169,8 @@ export default function HistoryScreen() {
   const [quotes, setQuotes] = useState<SavedQuote[]>([]);
   const [pendingDelete, setPendingDelete] = useState<SavedQuote | null>(null);
   const [showToast, setShowToast] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('All');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
 
   useFocusEffect(
     useCallback(() => {
@@ -194,6 +211,28 @@ export default function HistoryScreen() {
       params: { quoteId: quote.id, quoteData: JSON.stringify(quote) },
     });
   }, [router]);
+
+  const handleFilterPress = useCallback((filter: FilterKey) => {
+    console.log('[HistoryScreen] Filter pressed:', filter);
+    setActiveFilter(filter);
+  }, []);
+
+  const handleSortToggle = useCallback(() => {
+    setSortOrder((prev) => {
+      const next = prev === 'newest' ? 'oldest' : 'newest';
+      console.log('[HistoryScreen] Sort order toggled to:', next);
+      return next;
+    });
+  }, []);
+
+  // Apply filter and sort
+  const filteredQuotes = quotes
+    .filter((q) => matchesFilter(q, activeFilter))
+    .sort((a, b) => {
+      const timeA = new Date(a.analyzedAt).getTime();
+      const timeB = new Date(b.analyzedAt).getTime();
+      return sortOrder === 'newest' ? timeB - timeA : timeA - timeB;
+    });
 
   const renderItem = useCallback(({ item, index }: { item: SavedQuote; index: number }) => {
     const config = verdictConfig(item.verdict);
@@ -286,8 +325,90 @@ export default function HistoryScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      {/* Filter + Sort Bar */}
+      <View
+        style={{
+          paddingTop: 8,
+          paddingBottom: 4,
+          borderBottomWidth: 1,
+          borderBottomColor: COLORS.border,
+          backgroundColor: COLORS.background,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 12 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+            style={{ flex: 1 }}
+          >
+            {FILTER_OPTIONS.map((filter) => {
+              const isActive = activeFilter === filter;
+              return (
+                <TouchableOpacity
+                  key={filter}
+                  onPress={() => handleFilterPress(filter)}
+                  style={{
+                    paddingHorizontal: 14,
+                    paddingVertical: 7,
+                    borderRadius: 20,
+                    backgroundColor: isActive ? COLORS.primary : COLORS.surface,
+                    borderWidth: 1,
+                    borderColor: isActive ? COLORS.primary : COLORS.border,
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '600',
+                      color: isActive ? '#FFFFFF' : COLORS.textSecondary,
+                    }}
+                  >
+                    {filter}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          {/* Sort toggle */}
+          <TouchableOpacity
+            onPress={handleSortToggle}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              backgroundColor: COLORS.surface,
+              borderWidth: 1,
+              borderColor: COLORS.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginLeft: 4,
+            }}
+            activeOpacity={0.8}
+          >
+            <ArrowUpDown size={16} color={COLORS.textSecondary} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Sort label */}
+        <Text
+          style={{
+            fontSize: 11,
+            color: COLORS.textTertiary,
+            paddingHorizontal: 16,
+            paddingTop: 4,
+            paddingBottom: 6,
+          }}
+        >
+          {sortOrder === 'newest' ? 'Newest first' : 'Oldest first'}
+          {activeFilter !== 'All' ? ` · ${filteredQuotes.length} result${filteredQuotes.length !== 1 ? 's' : ''}` : ''}
+        </Text>
+      </View>
+
       <FlatList
-        data={quotes}
+        data={filteredQuotes}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentInsetAdjustmentBehavior="automatic"
@@ -319,7 +440,7 @@ export default function HistoryScreen() {
               <ClipboardList size={32} color={COLORS.primary} />
             </View>
             <Text style={{ fontSize: 18, fontWeight: '700', color: COLORS.text }}>
-              No quotes yet
+              {activeFilter === 'All' ? 'No quotes yet' : `No ${activeFilter} quotes`}
             </Text>
             <Text
               style={{
@@ -330,7 +451,9 @@ export default function HistoryScreen() {
                 lineHeight: 22,
               }}
             >
-              Your analyzed quotes will appear here for quick reference
+              {activeFilter === 'All'
+                ? 'Your analyzed quotes will appear here for quick reference'
+                : `No quotes with "${activeFilter}" verdict found`}
             </Text>
           </View>
         }

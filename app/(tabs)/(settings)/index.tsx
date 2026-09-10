@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,13 @@ import {
   Modal,
   Linking,
   Platform,
+  Alert,
 } from 'react-native';
-import { ChevronRight, Info, Star, Trash2, X, CheckCircle, BarChart2, Shield } from 'lucide-react-native';
+import { ChevronRight, Info, Star, Trash2, X, CheckCircle, BarChart2, Shield, Crown, RefreshCw, XCircle } from 'lucide-react-native';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { clearAllQuotes } from '@/utils/storage';
+import { getCredits } from '@/utils/creditsStorage';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import Constants from 'expo-constants';
 
 const COLORS = {
@@ -25,6 +28,8 @@ const COLORS = {
   divider: 'rgba(0,0,0,0.04)',
   danger: '#E53E3E',
   dangerMuted: 'rgba(229, 62, 62, 0.08)',
+  success: '#38A169',
+  successMuted: 'rgba(56, 161, 105, 0.1)',
 };
 
 function SettingsRow({
@@ -311,8 +316,23 @@ export default function SettingsScreen() {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [cleared, setCleared] = useState(false);
+  const [credits, setCredits] = useState(0);
 
+  const { isSubscribed, restorePurchases } = useSubscription();
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
+
+  useEffect(() => {
+    console.log('[Settings] Loading credits on mount');
+    getCredits().then((c) => {
+      console.log('[Settings] Credits loaded:', c);
+      setCredits(c);
+    });
+  }, []);
+
+  const storeSubscriptionUrl =
+    Platform.OS === 'ios'
+      ? 'https://apps.apple.com/account/subscriptions'
+      : 'https://play.google.com/store/account/subscriptions?sku=fairquote_monthly&package=com.fairquoteai.app';
 
   const handlePrivacyPolicy = () => {
     console.log('[Settings] Privacy Policy pressed');
@@ -338,6 +358,75 @@ export default function SettingsScreen() {
     setTimeout(() => setCleared(false), 3000);
   };
 
+  const handleManageSubscription = () => {
+    console.log('[Settings] Manage Subscription pressed');
+    Linking.openURL(storeSubscriptionUrl).catch(() => {
+      console.log('[Settings] Could not open subscription management URL');
+    });
+  };
+
+  const handleCancelSubscription = () => {
+    console.log('[Settings] Cancel Subscription pressed');
+    Alert.alert(
+      'Cancel Subscription',
+      "To cancel, you'll be taken to your store's subscription management page. Cancel there to stop future charges.",
+      [
+        {
+          text: 'Open Store',
+          onPress: () => {
+            console.log('[Settings] Cancel subscription — opening store');
+            Linking.openURL(storeSubscriptionUrl).catch(() => {
+              console.log('[Settings] Could not open store for cancellation');
+            });
+          },
+        },
+        {
+          text: 'Not Now',
+          style: 'cancel',
+          onPress: () => {
+            console.log('[Settings] Cancel subscription dismissed');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleRestorePurchases = async () => {
+    console.log('[Settings] Restore Purchases pressed');
+    try {
+      const restored = await restorePurchases();
+      if (restored) {
+        console.log('[Settings] Purchases restored successfully');
+        Alert.alert('Restored!', 'Your subscription has been restored.');
+      } else {
+        console.log('[Settings] No purchases found to restore');
+        Alert.alert('No Purchases Found', "We couldn't find any previous purchases to restore.");
+      }
+    } catch (error: any) {
+      console.error('[Settings] Restore failed:', error);
+      Alert.alert('Restore Failed', error.message || 'Please try again.');
+    }
+  };
+
+  // Subscription status display
+  const subscriptionStatusLabel = isSubscribed
+    ? 'Pro — Active'
+    : credits > 0
+    ? `${credits} credit${credits === 1 ? '' : 's'} remaining`
+    : 'Free — No active plan';
+
+  const subscriptionStatusColor = isSubscribed
+    ? COLORS.success
+    : credits > 0
+    ? COLORS.primary
+    : COLORS.textTertiary;
+
+  const subscriptionStatusBg = isSubscribed
+    ? COLORS.successMuted
+    : credits > 0
+    ? COLORS.primaryMuted
+    : 'rgba(0,0,0,0.04)';
+
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <ScrollView
@@ -350,6 +439,61 @@ export default function SettingsScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Subscription */}
+        <SectionCard title="Subscription">
+          {/* Status row */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              gap: 12,
+            }}
+          >
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                backgroundColor: subscriptionStatusBg,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Crown size={16} color={subscriptionStatusColor} />
+            </View>
+            <Text style={{ flex: 1, fontSize: 15, color: subscriptionStatusColor, fontWeight: '600' }}>
+              {subscriptionStatusLabel}
+            </Text>
+          </View>
+
+          <Divider />
+
+          <SettingsRow
+            icon={<RefreshCw size={16} color={COLORS.primary} />}
+            label="Manage Subscription"
+            onPress={handleManageSubscription}
+          />
+
+          <Divider />
+
+          <SettingsRow
+            icon={<RefreshCw size={16} color={COLORS.primary} />}
+            label="Restore Purchases"
+            onPress={handleRestorePurchases}
+          />
+
+          <Divider />
+
+          <SettingsRow
+            icon={<XCircle size={16} color={COLORS.danger} />}
+            label="Cancel Subscription"
+            onPress={handleCancelSubscription}
+            destructive
+          />
+        </SectionCard>
+
         {/* About */}
         <SectionCard title="About">
           <SettingsRow

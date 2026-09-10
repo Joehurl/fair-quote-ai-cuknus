@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { CheckCircle, AlertCircle, HelpCircle, TrendingDown } from 'lucide-react-native';
+import { CheckCircle, AlertCircle, HelpCircle, TrendingDown, Trophy } from 'lucide-react-native';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { analyzeQuote, AnalysisResult } from '@/utils/quoteAnalyzer';
 import { saveQuote, SavedQuote } from '@/utils/storage';
@@ -207,6 +207,8 @@ function ResultCard({
   onSave,
   onAnalyzeAnother,
   savedId,
+  label,
+  isWinner,
 }: {
   result: AnalysisResult;
   amount: number;
@@ -216,6 +218,8 @@ function ResultCard({
   onSave: () => void;
   onAnalyzeAnother: () => void;
   savedId: string | null;
+  label?: string;
+  isWinner?: boolean;
 }) {
   const slideAnim = useRef(new Animated.Value(20)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -244,11 +248,39 @@ function ResultCard({
           backgroundColor: COLORS.surface,
           borderRadius: 16,
           padding: 20,
-          borderWidth: 1,
-          borderColor: COLORS.border,
+          borderWidth: isWinner ? 2 : 1,
+          borderColor: isWinner ? COLORS.fair : COLORS.border,
           gap: 16,
         }}
       >
+        {/* Winner badge */}
+        {isWinner && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: COLORS.fairMuted,
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 8,
+              alignSelf: 'flex-start',
+            }}
+          >
+            <Trophy size={13} color={COLORS.fair} />
+            <Text style={{ fontSize: 11, fontWeight: '700', color: COLORS.fair, letterSpacing: 0.5 }}>
+              BETTER PRICE
+            </Text>
+          </View>
+        )}
+
+        {/* Label (Quote A / Quote B) */}
+        {label ? (
+          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.3 }}>
+            {label}
+          </Text>
+        ) : null}
+
         {/* Header */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <VerdictBadge verdict={result.verdict} />
@@ -325,7 +357,7 @@ function ResultCard({
           {!savedId ? (
             <AnimatedPressable
               onPress={() => {
-                console.log('[AnalyzeScreen] Save to History pressed');
+                console.log('[AnalyzeScreen] Save to History pressed', label ?? 'single');
                 onSave();
               }}
               style={{
@@ -426,6 +458,77 @@ function StatusBadge({ isSubscribed, credits }: { isSubscribed: boolean; credits
   return null;
 }
 
+// ─── Compare Mode Toggle ──────────────────────────────────────────────────────
+
+function CompareModeToggle({
+  compareMode,
+  onToggle,
+}: {
+  compareMode: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        backgroundColor: COLORS.surfaceSecondary,
+        borderRadius: 10,
+        padding: 3,
+        alignSelf: 'flex-start',
+      }}
+    >
+      <AnimatedPressable
+        onPress={() => {
+          if (compareMode) {
+            console.log('[AnalyzeScreen] Switched to Single mode');
+            onToggle();
+          }
+        }}
+        style={{
+          paddingHorizontal: 14,
+          paddingVertical: 6,
+          borderRadius: 8,
+          backgroundColor: !compareMode ? COLORS.surface : 'transparent',
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 13,
+            fontWeight: '600',
+            color: !compareMode ? COLORS.primary : COLORS.textTertiary,
+          }}
+        >
+          Single
+        </Text>
+      </AnimatedPressable>
+      <AnimatedPressable
+        onPress={() => {
+          if (!compareMode) {
+            console.log('[AnalyzeScreen] Switched to Compare mode');
+            onToggle();
+          }
+        }}
+        style={{
+          paddingHorizontal: 14,
+          paddingVertical: 6,
+          borderRadius: 8,
+          backgroundColor: compareMode ? COLORS.surface : 'transparent',
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 13,
+            fontWeight: '600',
+            color: compareMode ? COLORS.primary : COLORS.textTertiary,
+          }}
+        >
+          Compare
+        </Text>
+      </AnimatedPressable>
+    </View>
+  );
+}
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function AnalyzeScreen() {
@@ -433,13 +536,18 @@ export default function AnalyzeScreen() {
   const router = useRouter();
   const { isSubscribed, loading: subLoading } = useSubscription();
 
+  const [compareMode, setCompareMode] = useState(false);
+
   const [description, setDescription] = useState('');
   const [amountText, setAmountText] = useState('');
+  const [amountTextB, setAmountTextB] = useState('');
   const [location, setLocation] = useState('');
   const [details, setDetails] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [resultB, setResultB] = useState<AnalysisResult | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [savedIdB, setSavedIdB] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [credits, setCredits] = useState(0);
 
@@ -454,16 +562,38 @@ export default function AnalyzeScreen() {
     }
   }, [subLoading, isSubscribed]);
 
+  const handleToggleCompareMode = useCallback(() => {
+    setCompareMode((prev) => !prev);
+    setResult(null);
+    setResultB(null);
+    setSavedId(null);
+    setSavedIdB(null);
+    setAmountTextB('');
+  }, []);
+
   const handleAnalyze = useCallback(async () => {
     const amount = parseFloat(amountText.replace(/[^0-9.]/g, ''));
-    console.log('[AnalyzeScreen] Analyze Quote pressed', { description, amount, location, details });
+    const amountB = compareMode ? parseFloat(amountTextB.replace(/[^0-9.]/g, '')) : NaN;
+
+    console.log('[AnalyzeScreen] Analyze Quote pressed', {
+      description,
+      amount,
+      amountB: compareMode ? amountB : undefined,
+      location,
+      details,
+      compareMode,
+    });
 
     if (!description.trim()) {
       console.log('[AnalyzeScreen] Validation failed: no description');
       return;
     }
     if (isNaN(amount) || amount <= 0) {
-      console.log('[AnalyzeScreen] Validation failed: invalid amount');
+      console.log('[AnalyzeScreen] Validation failed: invalid amount A');
+      return;
+    }
+    if (compareMode && (isNaN(amountB) || amountB <= 0)) {
+      console.log('[AnalyzeScreen] Validation failed: invalid amount B');
       return;
     }
 
@@ -476,7 +606,9 @@ export default function AnalyzeScreen() {
 
     setIsAnalyzing(true);
     setResult(null);
+    setResultB(null);
     setSavedId(null);
+    setSavedIdB(null);
 
     // Deduct credit if not subscribed
     if (!isSubscribed && credits > 0) {
@@ -490,14 +622,23 @@ export default function AnalyzeScreen() {
     await new Promise((resolve) => setTimeout(resolve, 900));
 
     const analysisResult = analyzeQuote(description, amount, location, details);
-    console.log('[AnalyzeScreen] Analysis complete, verdict:', analysisResult.verdict);
+    console.log('[AnalyzeScreen] Analysis A complete, verdict:', analysisResult.verdict);
     setResult(analysisResult);
-    setIsAnalyzing(false);
-  }, [description, amountText, location, details, isSubscribed, credits, router]);
 
-  const handleSave = useCallback(async () => {
-    if (!result) return;
-    const amount = parseFloat(amountText.replace(/[^0-9.]/g, ''));
+    if (compareMode) {
+      const analysisResultB = analyzeQuote(description, amountB, location, details);
+      console.log('[AnalyzeScreen] Analysis B complete, verdict:', analysisResultB.verdict);
+      setResultB(analysisResultB);
+    }
+
+    setIsAnalyzing(false);
+  }, [description, amountText, amountTextB, location, details, isSubscribed, credits, router, compareMode]);
+
+  const handleSave = useCallback(async (which: 'A' | 'B' = 'A') => {
+    const targetResult = which === 'A' ? result : resultB;
+    if (!targetResult) return;
+    const rawAmount = which === 'A' ? amountText : amountTextB;
+    const amount = parseFloat(rawAmount.replace(/[^0-9.]/g, ''));
     const id = `quote_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const quote: SavedQuote = {
       id,
@@ -505,28 +646,35 @@ export default function AnalyzeScreen() {
       amount,
       location,
       details,
-      verdict: result.verdict,
-      confidence: result.confidence,
-      explanation: result.explanation,
-      tips: result.tips,
-      estimatedLow: result.estimatedLow,
-      estimatedHigh: result.estimatedHigh,
-      category: result.category,
+      verdict: targetResult.verdict,
+      confidence: targetResult.confidence,
+      explanation: targetResult.explanation,
+      tips: targetResult.tips,
+      estimatedLow: targetResult.estimatedLow,
+      estimatedHigh: targetResult.estimatedHigh,
+      category: targetResult.category,
       analyzedAt: new Date().toISOString(),
     };
-    console.log('[AnalyzeScreen] Saving quote to history:', id);
+    console.log('[AnalyzeScreen] Saving quote to history:', id, 'which:', which);
     await saveQuote(quote);
-    setSavedId(id);
-  }, [result, description, amountText, location, details]);
+    if (which === 'A') {
+      setSavedId(id);
+    } else {
+      setSavedIdB(id);
+    }
+  }, [result, resultB, description, amountText, amountTextB, location, details]);
 
   const handleAnalyzeAnother = useCallback(() => {
     console.log('[AnalyzeScreen] Clearing form for new analysis');
     setDescription('');
     setAmountText('');
+    setAmountTextB('');
     setLocation('');
     setDetails('');
     setResult(null);
+    setResultB(null);
     setSavedId(null);
+    setSavedIdB(null);
   }, []);
 
   const inputStyle = (field: string) => ({
@@ -541,7 +689,11 @@ export default function AnalyzeScreen() {
     borderCurve: 'continuous' as const,
   });
 
-  const isFormValid = description.trim().length > 0 && parseFloat(amountText) > 0;
+  const amountA = parseFloat(amountText.replace(/[^0-9.]/g, ''));
+  const amountBVal = parseFloat(amountTextB.replace(/[^0-9.]/g, ''));
+  const isFormValid = description.trim().length > 0 &&
+    !isNaN(amountA) && amountA > 0 &&
+    (!compareMode || (!isNaN(amountBVal) && amountBVal > 0));
   const hasAccess = isSubscribed || credits > 0;
 
   // Determine analyze button label
@@ -549,7 +701,26 @@ export default function AnalyzeScreen() {
     ? 'Analyzing...'
     : !hasAccess
     ? 'Analyze Quote — Unlock'
+    : compareMode
+    ? 'Compare Quotes'
     : 'Analyze Quote';
+
+  // Determine winner in compare mode
+  const getWinner = (): 'A' | 'B' | null => {
+    if (!result || !resultB) return null;
+    // Lower amount with better verdict wins; use confidence as tiebreaker
+    const scoreMap: Record<string, number> = { underpriced: 3, fair: 2, uncertain: 1, overpriced: 0 };
+    const scoreA = scoreMap[result.verdict] ?? 0;
+    const scoreB = scoreMap[resultB.verdict] ?? 0;
+    if (scoreA > scoreB) return 'A';
+    if (scoreB > scoreA) return 'B';
+    // Same verdict — lower price wins
+    if (amountA < amountBVal) return 'A';
+    if (amountBVal < amountA) return 'B';
+    return null;
+  };
+
+  const winner = getWinner();
 
   return (
     <KeyboardAvoidingView
@@ -575,6 +746,9 @@ export default function AnalyzeScreen() {
             <StatusBadge isSubscribed={isSubscribed} credits={credits} />
           )}
         </View>
+
+        {/* Compare Mode Toggle */}
+        <CompareModeToggle compareMode={compareMode} onToggle={handleToggleCompareMode} />
 
         {/* Form Card */}
         <View
@@ -609,40 +783,114 @@ export default function AnalyzeScreen() {
             />
           </View>
 
-          {/* Amount */}
-          <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, letterSpacing: 0.2 }}>
-              Quote amount
-            </Text>
-            <View style={{ position: 'relative' }}>
-              <View
-                style={{
-                  position: 'absolute',
-                  left: 14,
-                  top: 0,
-                  bottom: 0,
-                  justifyContent: 'center',
-                  zIndex: 1,
-                }}
-              >
-                <Text style={{ fontSize: 16, color: COLORS.textSecondary, fontWeight: '500' }}>$</Text>
+          {/* Amount(s) */}
+          {compareMode ? (
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              {/* Quote A */}
+              <View style={{ flex: 1, gap: 6 }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, letterSpacing: 0.2 }}>
+                  Quote A
+                </Text>
+                <View style={{ position: 'relative' }}>
+                  <View
+                    style={{
+                      position: 'absolute',
+                      left: 14,
+                      top: 0,
+                      bottom: 0,
+                      justifyContent: 'center',
+                      zIndex: 1,
+                    }}
+                  >
+                    <Text style={{ fontSize: 16, color: COLORS.textSecondary, fontWeight: '500' }}>$</Text>
+                  </View>
+                  <TextInput
+                    style={[inputStyle('amountA'), { paddingLeft: 28 }]}
+                    placeholder="0.00"
+                    placeholderTextColor={COLORS.textTertiary}
+                    value={amountText}
+                    onChangeText={(t) => {
+                      console.log('[AnalyzeScreen] Amount A changed:', t);
+                      setAmountText(t);
+                    }}
+                    onFocus={() => setFocusedField('amountA')}
+                    onBlur={() => setFocusedField(null)}
+                    keyboardType="decimal-pad"
+                    returnKeyType="next"
+                  />
+                </View>
               </View>
-              <TextInput
-                style={[inputStyle('amount'), { paddingLeft: 28 }]}
-                placeholder="0.00"
-                placeholderTextColor={COLORS.textTertiary}
-                value={amountText}
-                onChangeText={(t) => {
-                  console.log('[AnalyzeScreen] Amount changed:', t);
-                  setAmountText(t);
-                }}
-                onFocus={() => setFocusedField('amount')}
-                onBlur={() => setFocusedField(null)}
-                keyboardType="decimal-pad"
-                returnKeyType="next"
-              />
+
+              {/* Quote B */}
+              <View style={{ flex: 1, gap: 6 }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, letterSpacing: 0.2 }}>
+                  Quote B
+                </Text>
+                <View style={{ position: 'relative' }}>
+                  <View
+                    style={{
+                      position: 'absolute',
+                      left: 14,
+                      top: 0,
+                      bottom: 0,
+                      justifyContent: 'center',
+                      zIndex: 1,
+                    }}
+                  >
+                    <Text style={{ fontSize: 16, color: COLORS.textSecondary, fontWeight: '500' }}>$</Text>
+                  </View>
+                  <TextInput
+                    style={[inputStyle('amountB'), { paddingLeft: 28 }]}
+                    placeholder="0.00"
+                    placeholderTextColor={COLORS.textTertiary}
+                    value={amountTextB}
+                    onChangeText={(t) => {
+                      console.log('[AnalyzeScreen] Amount B changed:', t);
+                      setAmountTextB(t);
+                    }}
+                    onFocus={() => setFocusedField('amountB')}
+                    onBlur={() => setFocusedField(null)}
+                    keyboardType="decimal-pad"
+                    returnKeyType="next"
+                  />
+                </View>
+              </View>
             </View>
-          </View>
+          ) : (
+            <View style={{ gap: 6 }}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, letterSpacing: 0.2 }}>
+                Quote amount
+              </Text>
+              <View style={{ position: 'relative' }}>
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: 14,
+                    top: 0,
+                    bottom: 0,
+                    justifyContent: 'center',
+                    zIndex: 1,
+                  }}
+                >
+                  <Text style={{ fontSize: 16, color: COLORS.textSecondary, fontWeight: '500' }}>$</Text>
+                </View>
+                <TextInput
+                  style={[inputStyle('amount'), { paddingLeft: 28 }]}
+                  placeholder="0.00"
+                  placeholderTextColor={COLORS.textTertiary}
+                  value={amountText}
+                  onChangeText={(t) => {
+                    console.log('[AnalyzeScreen] Amount changed:', t);
+                    setAmountText(t);
+                  }}
+                  onFocus={() => setFocusedField('amount')}
+                  onBlur={() => setFocusedField(null)}
+                  keyboardType="decimal-pad"
+                  returnKeyType="next"
+                />
+              </View>
+            </View>
+          )}
 
           {/* Location */}
           <View style={{ gap: 6 }}>
@@ -721,18 +969,48 @@ export default function AnalyzeScreen() {
         {/* Loading Skeleton */}
         {isAnalyzing && <AnalysisSkeleton />}
 
-        {/* Result Card */}
-        {result && !isAnalyzing && (
+        {/* Single Mode Result */}
+        {!compareMode && result && !isAnalyzing && (
           <ResultCard
             result={result}
             amount={parseFloat(amountText.replace(/[^0-9.]/g, ''))}
             description={description}
             location={location}
             details={details}
-            onSave={handleSave}
+            onSave={() => handleSave('A')}
             onAnalyzeAnother={handleAnalyzeAnother}
             savedId={savedId}
           />
+        )}
+
+        {/* Compare Mode Results */}
+        {compareMode && result && resultB && !isAnalyzing && (
+          <View style={{ gap: 12 }}>
+            <ResultCard
+              result={result}
+              amount={parseFloat(amountText.replace(/[^0-9.]/g, ''))}
+              description={description}
+              location={location}
+              details={details}
+              onSave={() => handleSave('A')}
+              onAnalyzeAnother={handleAnalyzeAnother}
+              savedId={savedId}
+              label="Quote A"
+              isWinner={winner === 'A'}
+            />
+            <ResultCard
+              result={resultB}
+              amount={parseFloat(amountTextB.replace(/[^0-9.]/g, ''))}
+              description={description}
+              location={location}
+              details={details}
+              onSave={() => handleSave('B')}
+              onAnalyzeAnother={handleAnalyzeAnother}
+              savedId={savedIdB}
+              label="Quote B"
+              isWinner={winner === 'B'}
+            />
+          </View>
         )}
       </ScrollView>
     </KeyboardAvoidingView>

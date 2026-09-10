@@ -47,6 +47,17 @@ const PRICE_RANGES: Record<string, PriceRange> = {
   deck: { low: 15, high: 35, unit: 'per sq ft', tips: ['Composite costs more upfront', 'Permit may be required', 'Check local codes'] },
   drywall: { low: 1.5, high: 4, unit: 'per sq ft', tips: ['Texture matching adds cost', 'Painting separate', 'Water damage needs inspection'] },
   tile: { low: 5, high: 20, unit: 'per sq ft installed', tips: ['Grout color matters', 'Removal adds cost', 'Heated floor adds cost'] },
+  // New categories
+  appliance: { low: 100, high: 400, unit: 'repair', tips: ['Ask if repair vs replace makes sense', 'Parts warranty important', 'Brand affects parts cost'] },
+  water_heater: { low: 800, high: 1800, unit: 'installed', tips: ['Tank vs tankless affects price', 'Energy factor matters', 'Permit may be required'] },
+  insulation: { low: 1, high: 3, unit: 'per sq ft', tips: ['R-value matters for climate', 'Attic insulation is most cost-effective', 'Check for rebates'] },
+  concrete: { low: 4, high: 10, unit: 'per sq ft', tips: ['Thickness affects price', 'Rebar adds cost', 'Curing time matters'] },
+  gutter: { low: 4, high: 12, unit: 'per linear foot', tips: ['Seamless gutters cost more', 'Guards add cost but save maintenance', 'Downspout extensions important'] },
+  siding: { low: 3, high: 12, unit: 'per sq ft installed', tips: ['Material choice is key', 'Removal of old siding adds cost', 'Insulated siding costs more'] },
+  garage_door: { low: 700, high: 2000, unit: 'installed', tips: ['Insulated doors cost more', 'Smart openers add value', 'Spring replacement is common'] },
+  solar: { low: 15000, high: 35000, unit: 'full system', tips: ['Federal tax credit available', 'Get multiple quotes', 'Check local incentives'] },
+  bathroom_remodel: { low: 5000, high: 20000, unit: 'full remodel', tips: ['Fixtures are major cost driver', 'Plumbing moves add cost', 'Tile selection matters'] },
+  kitchen_remodel: { low: 10000, high: 50000, unit: 'full remodel', tips: ['Cabinets are biggest cost', 'Countertop material varies widely', 'Appliances separate'] },
 };
 
 const KEYWORD_MAP: Record<string, string> = {
@@ -57,7 +68,6 @@ const KEYWORD_MAP: Record<string, string> = {
   clog: 'drain',
   toilet: 'toilet',
   commode: 'toilet',
-  'water heater': 'plumbing',
   pipe: 'plumbing',
   plumb: 'plumbing',
   leak: 'plumbing',
@@ -129,6 +139,38 @@ const KEYWORD_MAP: Record<string, string> = {
   tile: 'tile',
   tiling: 'tile',
   grout: 'tile',
+  // New keywords
+  appliance: 'appliance',
+  refrigerator: 'appliance',
+  washer: 'appliance',
+  dryer: 'appliance',
+  dishwasher: 'appliance',
+  oven: 'appliance',
+  microwave: 'appliance',
+  'water heater': 'water_heater',
+  'hot water': 'water_heater',
+  'water tank': 'water_heater',
+  insulation: 'insulation',
+  'attic insulation': 'insulation',
+  concrete: 'concrete',
+  driveway: 'concrete',
+  sidewalk: 'concrete',
+  'patio concrete': 'concrete',
+  gutter: 'gutter',
+  gutters: 'gutter',
+  downspout: 'gutter',
+  siding: 'siding',
+  'vinyl siding': 'siding',
+  'garage door': 'garage_door',
+  garage: 'garage_door',
+  solar: 'solar',
+  'solar panel': 'solar',
+  'solar panels': 'solar',
+  'bathroom remodel': 'bathroom_remodel',
+  'bathroom renovation': 'bathroom_remodel',
+  'bath remodel': 'bathroom_remodel',
+  'kitchen remodel': 'kitchen_remodel',
+  'kitchen renovation': 'kitchen_remodel',
 };
 
 const HIGH_COST_CITIES = ['new york', 'nyc', 'san francisco', 'sf', 'los angeles', 'la', 'seattle', 'boston', 'chicago', 'washington dc', 'dc', 'miami', 'denver', 'austin', 'portland'];
@@ -189,6 +231,17 @@ function formatCategoryName(category: string): string {
     deck: 'Deck Construction',
     drywall: 'Drywall Repair',
     tile: 'Tile Installation',
+    // New categories
+    appliance: 'Appliance Repair',
+    water_heater: 'Water Heater Installation',
+    insulation: 'Insulation',
+    concrete: 'Concrete Work',
+    gutter: 'Gutter Installation',
+    siding: 'Siding Installation',
+    garage_door: 'Garage Door Installation',
+    solar: 'Solar Panel Installation',
+    bathroom_remodel: 'Bathroom Remodel',
+    kitchen_remodel: 'Kitchen Remodel',
   };
   return names[category] ?? category;
 }

@@ -420,10 +420,18 @@ export default function PaywallScreen() {
           </TouchableOpacity>
 
           {/* Legal */}
-          <Text style={styles.legalText}>
-            No hassle cancellation · Secure payment via{' '}
-            {Platform.OS === 'ios' ? 'Apple' : 'Google'}
-          </Text>
+          <View style={styles.legalRow}>
+            <View style={styles.legalItem}>
+              <Text style={styles.legalIcon}>✓</Text>
+              <Text style={styles.legalText}>Cancel anytime in your store settings</Text>
+            </View>
+            <View style={styles.legalItem}>
+              <Text style={styles.legalIcon}>🔒</Text>
+              <Text style={styles.legalText}>
+                Secure payment via {Platform.OS === 'ios' ? 'Apple' : 'Google'}
+              </Text>
+            </View>
+          </View>
         </View>
       </Animated.View>
     </SafeAreaView>
@@ -684,10 +692,23 @@ const styles = StyleSheet.create({
     color: COLORS.textTertiary,
     textDecorationLine: 'underline',
   },
+  legalRow: {
+    gap: 4,
+  },
+  legalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  legalIcon: {
+    fontSize: 12,
+    color: COLORS.textTertiary,
+  },
   legalText: {
-    fontSize: 11,
+    fontSize: 13,
     color: COLORS.textTertiary,
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 18,
   },
 });
