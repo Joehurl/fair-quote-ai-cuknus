@@ -7,7 +7,7 @@ import {
   Linking,
   Platform,
 } from 'react-native';
-import { ChevronRight, Info, Star, Trash2, X, CheckCircle, BarChart2 } from 'lucide-react-native';
+import { ChevronRight, Info, Star, Trash2, X, CheckCircle, BarChart2, Shield } from 'lucide-react-native';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { clearAllQuotes } from '@/utils/storage';
 import Constants from 'expo-constants';
@@ -314,6 +314,13 @@ export default function SettingsScreen() {
 
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 
+  const handlePrivacyPolicy = () => {
+    console.log('[Settings] Privacy Policy pressed');
+    Linking.openURL('https://www.freeprivacypolicy.com/live/a13aaca1-444e-4301-b63c-44e53c5c7995').catch(() => {
+      console.log('[Settings] Could not open privacy policy URL');
+    });
+  };
+
   const handleRateApp = () => {
     console.log('[Settings] Rate app pressed');
     const url = Platform.OS === 'ios'
@@ -359,6 +366,12 @@ export default function SettingsScreen() {
               console.log('[Settings] How it works pressed');
               setShowHowItWorks(true);
             }}
+          />
+          <Divider />
+          <SettingsRow
+            icon={<Shield size={16} color={COLORS.primary} />}
+            label="Privacy Policy"
+            onPress={handlePrivacyPolicy}
           />
           <Divider />
           <SettingsRow
