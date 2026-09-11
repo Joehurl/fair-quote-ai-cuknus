@@ -17,7 +17,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "FairQuote AI uses your location to provide accurate local market pricing for service quotes in your area.",
-        "NSUserTrackingUsageDescription": "We do not track you. This permission is not used by FairQuote AI."
+        "NSUserTrackingUsageDescription": "This identifier may be used to deliver personalized ads and measure ad performance."
       },
       "privacyManifests": {
         "NSPrivacyTracking": false,
@@ -26,7 +26,9 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
           }
         ]
       }
