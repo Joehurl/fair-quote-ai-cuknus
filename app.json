@@ -16,8 +16,7 @@
       "bundleIdentifier": "com.fairquoteai.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "FairQuote AI uses your location to provide accurate local market pricing for service quotes in your area.",
-        "NSUserTrackingUsageDescription": "This identifier may be used to deliver personalized ads and measure ad performance."
+        "NSLocationWhenInUseUsageDescription": "FairQuote AI uses your location to provide accurate local market pricing for service quotes in your area."
       },
       "privacyManifests": {
         "NSPrivacyTracking": false,
