@@ -336,7 +336,7 @@ export default function SettingsScreen() {
 
   const handlePrivacyPolicy = () => {
     console.log('[Settings] Privacy Policy pressed');
-    Linking.openURL('https://www.freeprivacypolicy.com/live/a13aaca1-444e-4301-b63c-44e53c5c7995').catch(() => {
+    Linking.openURL('https://www.freeprivacypolicy.com/live/8131ee49-0d98-4da3-8251-f90b129ff81b').catch(() => {
       console.log('[Settings] Could not open privacy policy URL');
     });
   };
