@@ -44,7 +44,10 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
+      "router": {},
+      "revenueCatApiKeyIos": "test_yUKeYavqkxvhpInSzsvVFAWJMSj",
+      "revenueCatApiKeyAndroid": "test_yUKeYavqkxvhpInSzsvVFAWJMSj",
+      "revenueCatEntitlementId": "pto"
     }
   }
 }
