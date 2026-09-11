@@ -12,5 +12,14 @@
     "production": {
       "autoIncrement": true
     }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascApiKeyPath": "./AuthKey_RLXQ84K72C.p8",
+        "ascApiKeyIssuerId": "4cfcb586-09a6-4eaf-b948-26e392f2639b",
+        "ascApiKeyId": "RLXQ84K72C"
+      }
+    }
   }
 }
