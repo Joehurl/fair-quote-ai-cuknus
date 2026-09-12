@@ -344,7 +344,7 @@ export default function SettingsScreen() {
   const handleRateApp = () => {
     console.log('[Settings] Rate app pressed');
     const url = Platform.OS === 'ios'
-      ? 'https://apps.apple.com/app/id0000000000'
+      ? 'itms-apps://itunes.apple.com/app/id6810721327?action=write-review'
       : 'https://play.google.com/store/apps/details?id=com.fairquoteai';
     Linking.openURL(url).catch(() => {
       console.log('[Settings] Could not open app store URL');

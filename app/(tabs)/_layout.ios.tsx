@@ -2,7 +2,7 @@ import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
 
 export default function TabLayout() {
   return (
-    <NativeTabs>
+    <NativeTabs initialTab="(analyze)">
       <NativeTabs.Trigger name="(analyze)">
         <Icon sf="magnifyingglass.circle.fill" />
         <Label>Analyze</Label>
