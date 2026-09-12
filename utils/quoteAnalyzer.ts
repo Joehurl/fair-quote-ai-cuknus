@@ -14,6 +14,7 @@ interface PriceRange {
   low: number;
   high: number;
   unit: string;
+  perUnit?: 'sqft' | 'linearft';
   tips: string[];
 }
 
@@ -38,22 +39,22 @@ const PRICE_RANGES: Record<string, PriceRange> = {
   auto_repair: { low: 100, high: 500, unit: 'per job', tips: ['Get written estimate', 'Ask about OEM vs aftermarket parts', 'Check warranty'] },
   oil_change: { low: 40, high: 100, unit: 'synthetic', tips: ['Synthetic lasts longer', 'Check for coupons', 'Tire rotation often bundled'] },
   brakes: { low: 200, high: 600, unit: 'per axle', tips: ['Front brakes wear faster', 'Ask about rotor condition', 'Get parts warranty'] },
-  carpet: { low: 1, high: 4, unit: 'per sq ft installed', tips: ['Padding quality matters', 'Moving furniture may cost extra', 'Ask about seams'] },
-  flooring: { low: 3, high: 12, unit: 'per sq ft installed', tips: ['Material cost varies widely', 'Subfloor prep adds cost', 'Ask about transitions'] },
+  carpet: { low: 1, high: 4, unit: 'per sq ft installed', perUnit: 'sqft', tips: ['Padding quality matters', 'Moving furniture may cost extra', 'Ask about seams'] },
+  flooring: { low: 3, high: 12, unit: 'per sq ft installed', perUnit: 'sqft', tips: ['Material cost varies widely', 'Subfloor prep adds cost', 'Ask about transitions'] },
   window: { low: 300, high: 800, unit: 'per window installed', tips: ['Energy Star rating saves money', 'Frame material matters', 'Check warranty'] },
   pest: { low: 100, high: 300, unit: 'initial treatment', tips: ['Ask about guarantee', 'Recurring plans save money', 'Identify pest first'] },
   tree: { low: 300, high: 2000, unit: 'per tree removal', tips: ['Size and location matter', 'Stump removal extra', 'Check insurance'] },
-  fence: { low: 15, high: 50, unit: 'per linear foot', tips: ['Material affects price', 'Gates cost extra', 'Check property lines'] },
-  deck: { low: 15, high: 35, unit: 'per sq ft', tips: ['Composite costs more upfront', 'Permit may be required', 'Check local codes'] },
-  drywall: { low: 1.5, high: 4, unit: 'per sq ft', tips: ['Texture matching adds cost', 'Painting separate', 'Water damage needs inspection'] },
-  tile: { low: 5, high: 20, unit: 'per sq ft installed', tips: ['Grout color matters', 'Removal adds cost', 'Heated floor adds cost'] },
+  fence: { low: 15, high: 50, unit: 'per linear foot', perUnit: 'linearft', tips: ['Material affects price', 'Gates cost extra', 'Check property lines'] },
+  deck: { low: 15, high: 35, unit: 'per sq ft', perUnit: 'sqft', tips: ['Composite costs more upfront', 'Permit may be required', 'Check local codes'] },
+  drywall: { low: 1.5, high: 4, unit: 'per sq ft', perUnit: 'sqft', tips: ['Texture matching adds cost', 'Painting separate', 'Water damage needs inspection'] },
+  tile: { low: 5, high: 20, unit: 'per sq ft installed', perUnit: 'sqft', tips: ['Grout color matters', 'Removal adds cost', 'Heated floor adds cost'] },
   // New categories
   appliance: { low: 100, high: 400, unit: 'repair', tips: ['Ask if repair vs replace makes sense', 'Parts warranty important', 'Brand affects parts cost'] },
   water_heater: { low: 800, high: 1800, unit: 'installed', tips: ['Tank vs tankless affects price', 'Energy factor matters', 'Permit may be required'] },
-  insulation: { low: 1, high: 3, unit: 'per sq ft', tips: ['R-value matters for climate', 'Attic insulation is most cost-effective', 'Check for rebates'] },
-  concrete: { low: 4, high: 10, unit: 'per sq ft', tips: ['Thickness affects price', 'Rebar adds cost', 'Curing time matters'] },
-  gutter: { low: 4, high: 12, unit: 'per linear foot', tips: ['Seamless gutters cost more', 'Guards add cost but save maintenance', 'Downspout extensions important'] },
-  siding: { low: 3, high: 12, unit: 'per sq ft installed', tips: ['Material choice is key', 'Removal of old siding adds cost', 'Insulated siding costs more'] },
+  insulation: { low: 1, high: 3, unit: 'per sq ft', perUnit: 'sqft', tips: ['R-value matters for climate', 'Attic insulation is most cost-effective', 'Check for rebates'] },
+  concrete: { low: 4, high: 10, unit: 'per sq ft', perUnit: 'sqft', tips: ['Thickness affects price', 'Rebar adds cost', 'Curing time matters'] },
+  gutter: { low: 4, high: 12, unit: 'per linear foot', perUnit: 'linearft', tips: ['Seamless gutters cost more', 'Guards add cost but save maintenance', 'Downspout extensions important'] },
+  siding: { low: 3, high: 12, unit: 'per sq ft installed', perUnit: 'sqft', tips: ['Material choice is key', 'Removal of old siding adds cost', 'Insulated siding costs more'] },
   garage_door: { low: 700, high: 2000, unit: 'installed', tips: ['Insulated doors cost more', 'Smart openers add value', 'Spring replacement is common'] },
   solar: { low: 15000, high: 35000, unit: 'full system', tips: ['Federal tax credit available', 'Get multiple quotes', 'Check local incentives'] },
   bathroom_remodel: { low: 5000, high: 20000, unit: 'full remodel', tips: ['Fixtures are major cost driver', 'Plumbing moves add cost', 'Tile selection matters'] },
@@ -246,6 +247,59 @@ function formatCategoryName(category: string): string {
   return names[category] ?? category;
 }
 
+/**
+ * Parses a combined text string for a measurement in sq ft or linear ft.
+ * Returns the numeric measurement, or null if none found.
+ */
+export function extractMeasurement(text: string, unit: 'sqft' | 'linearft'): number | null {
+  console.log('[extractMeasurement] Parsing text for', unit, ':', text);
+
+  const t = text.toLowerCase();
+
+  if (unit === 'sqft') {
+    // Pattern: NxM, N x M, Nft x Mft, N' x M', N'xM', etc.
+    const dimPattern = /(\d+(?:\.\d+)?)\s*(?:ft|feet|')?\s*[x×]\s*(\d+(?:\.\d+)?)\s*(?:ft|feet|')?/i;
+    const dimMatch = t.match(dimPattern);
+    if (dimMatch) {
+      const sqft = parseFloat(dimMatch[1]) * parseFloat(dimMatch[2]);
+      console.log('[extractMeasurement] Matched dimension pattern:', dimMatch[0], '→', sqft, 'sq ft');
+      return sqft;
+    }
+
+    // Pattern: 100 sq ft, 100sqft, 100 square feet, 100 square foot
+    const sqftPattern = /(\d+(?:\.\d+)?)\s*(?:sq\.?\s*ft\.?|sqft|square\s*f(?:eet|oot|t))/i;
+    const sqftMatch = t.match(sqftPattern);
+    if (sqftMatch) {
+      const sqft = parseFloat(sqftMatch[1]);
+      console.log('[extractMeasurement] Matched sq ft pattern:', sqftMatch[0], '→', sqft, 'sq ft');
+      return sqft;
+    }
+  }
+
+  if (unit === 'linearft') {
+    // Pattern: 50 linear feet, 50 linear ft, 50 lf, 50 lin ft
+    const linearPattern = /(\d+(?:\.\d+)?)\s*(?:linear\s*f(?:eet|oot|t)\.?|lin\.?\s*ft\.?|lf\b)/i;
+    const linearMatch = t.match(linearPattern);
+    if (linearMatch) {
+      const lf = parseFloat(linearMatch[1]);
+      console.log('[extractMeasurement] Matched linear ft pattern:', linearMatch[0], '→', lf, 'linear ft');
+      return lf;
+    }
+
+    // Pattern: 50 ft (generic feet, only for linear categories)
+    const ftPattern = /(\d+(?:\.\d+)?)\s*(?:ft\.?|feet|foot)\b/i;
+    const ftMatch = t.match(ftPattern);
+    if (ftMatch) {
+      const lf = parseFloat(ftMatch[1]);
+      console.log('[extractMeasurement] Matched generic ft pattern:', ftMatch[0], '→', lf, 'linear ft');
+      return lf;
+    }
+  }
+
+  console.log('[extractMeasurement] No measurement found');
+  return null;
+}
+
 export function analyzeQuote(
   description: string,
   amount: number,
@@ -278,8 +332,32 @@ export function analyzeQuote(
 
   const range = PRICE_RANGES[category];
   const locationMultiplier = getLocationMultiplier(location);
-  const adjustedLow = Math.round(range.low * locationMultiplier);
-  const adjustedHigh = Math.round(range.high * locationMultiplier);
+
+  // Resolve per-unit ranges by extracting measurement from description + details
+  let resolvedLow = range.low;
+  let resolvedHigh = range.high;
+  let measurementNote = '';
+
+  if (range.perUnit) {
+    const combinedText = description + ' ' + details;
+    const measurement = extractMeasurement(combinedText, range.perUnit);
+    console.log('[analyzeQuote] Per-unit category detected, measurement:', measurement, range.perUnit);
+
+    if (measurement !== null) {
+      resolvedLow = range.low * measurement;
+      resolvedHigh = range.high * measurement;
+      const unitLabel = range.perUnit === 'sqft' ? 'sq ft' : 'linear ft';
+      measurementNote = ` for a ${measurement} ${unitLabel} ${formatCategoryName(category).toLowerCase()}`;
+      console.log('[analyzeQuote] Scaled range by measurement:', { resolvedLow, resolvedHigh });
+    } else {
+      // No measurement found — keep per-unit rates but annotate explanation
+      const unitLabel = range.perUnit === 'sqft' ? 'per sq ft' : 'per linear ft';
+      measurementNote = ` (rate shown is ${unitLabel} — add dimensions for a total estimate)`;
+    }
+  }
+
+  const adjustedLow = Math.round(resolvedLow * locationMultiplier);
+  const adjustedHigh = Math.round(resolvedHigh * locationMultiplier);
 
   console.log('[analyzeQuote] Price range:', { adjustedLow, adjustedHigh, locationMultiplier });
 
@@ -291,33 +369,37 @@ export function analyzeQuote(
   const rangeSpread = adjustedHigh - adjustedLow;
   const buffer = rangeSpread * 0.15;
 
+  const rangeLabel = range.perUnit && !measurementNote.startsWith(' for')
+    ? `$${adjustedLow.toLocaleString()}–$${adjustedHigh.toLocaleString()} ${range.perUnit === 'sqft' ? 'per sq ft' : 'per linear ft'}`
+    : `$${adjustedLow.toLocaleString()}–$${adjustedHigh.toLocaleString()}`;
+
   if (amount < adjustedLow - buffer) {
     const howLow = ((adjustedLow - amount) / adjustedLow) * 100;
     if (howLow > 40) {
       verdict = 'uncertain';
       confidence = 55;
-      explanation = `This quote is significantly below the typical range of $${adjustedLow.toLocaleString()}–$${adjustedHigh.toLocaleString()} for ${formatCategoryName(category)}. Prices this low may indicate cut corners, unlicensed work, or a misunderstanding of the scope. Verify what's included before proceeding.`;
+      explanation = `This quote is significantly below the typical range of ${rangeLabel} for ${formatCategoryName(category)}${measurementNote}. Prices this low may indicate cut corners, unlicensed work, or a misunderstanding of the scope. Verify what's included before proceeding.`;
     } else {
       verdict = 'underpriced';
       confidence = 70;
-      explanation = `This quote is below the typical range of $${adjustedLow.toLocaleString()}–$${adjustedHigh.toLocaleString()} for ${formatCategoryName(category)}. This could be a great deal, but make sure the contractor is licensed and the quote covers all necessary work.`;
+      explanation = `This quote is below the typical range of ${rangeLabel} for ${formatCategoryName(category)}${measurementNote}. This could be a great deal, but make sure the contractor is licensed and the quote covers all necessary work.`;
     }
   } else if (amount > adjustedHigh + buffer) {
     const howHigh = ((amount - adjustedHigh) / adjustedHigh) * 100;
     if (howHigh > 50) {
       verdict = 'overpriced';
       confidence = 85;
-      explanation = `This quote is well above the typical range of $${adjustedLow.toLocaleString()}–$${adjustedHigh.toLocaleString()} for ${formatCategoryName(category)}. We strongly recommend getting additional quotes before proceeding.`;
+      explanation = `This quote is well above the typical range of ${rangeLabel} for ${formatCategoryName(category)}${measurementNote}. We strongly recommend getting additional quotes before proceeding.`;
     } else {
       verdict = 'overpriced';
       confidence = 72;
-      explanation = `This quote is above the typical range of $${adjustedLow.toLocaleString()}–$${adjustedHigh.toLocaleString()} for ${formatCategoryName(category)}. Consider negotiating or getting a second opinion — there may be room to reduce the price.`;
+      explanation = `This quote is above the typical range of ${rangeLabel} for ${formatCategoryName(category)}${measurementNote}. Consider negotiating or getting a second opinion — there may be room to reduce the price.`;
     }
   } else {
     const distanceFromMid = Math.abs(amount - midpoint) / (rangeSpread / 2);
     confidence = Math.round(85 - distanceFromMid * 15);
     verdict = 'fair';
-    explanation = `This quote falls within the typical range of $${adjustedLow.toLocaleString()}–$${adjustedHigh.toLocaleString()} for ${formatCategoryName(category)}${location ? ' in your area' : ''}. This appears to be a fair market price.`;
+    explanation = `This quote falls within the typical range of ${rangeLabel} for ${formatCategoryName(category)}${measurementNote}${location ? ' in your area' : ''}. This appears to be a fair market price.`;
   }
 
   const tips = [...range.tips];
