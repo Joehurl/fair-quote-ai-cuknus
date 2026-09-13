@@ -1,7 +1,7 @@
 import "react-native-reanimated";
 import React, { useEffect, useState } from "react";
 import { useFonts } from "expo-font";
-import { Stack, Redirect, usePathname, useRouter } from "expo-router";
+import { Stack, Redirect, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -16,7 +16,7 @@ import {
 } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
-import { SubscriptionProvider, useSubscription } from "@/contexts/SubscriptionContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 // Note: Error logging is auto-initialized via index.ts import
 
@@ -34,45 +34,6 @@ export const unstable_settings = {
 };
 
 
-function SubscriptionRedirect() {
-  const { isSubscribed, loading } = useSubscription();
-  const router = useRouter();
-  const pathname = usePathname();
-  // Once the user dismisses the paywall, don't force-redirect again this session
-  const paywallDismissedRef = React.useRef(false);
-
-  useEffect(() => {
-    if (loading) return;
-    const onOnboarding = pathname.startsWith("/onboarding");
-    if (onOnboarding) return;
-    // If user just left the paywall (dismissed it), mark as dismissed
-    if (pathname !== "/paywall" && paywallDismissedRef.current) return;
-    // If user is on paywall, reset dismissed flag (they're viewing it)
-    if (pathname === "/paywall") {
-      paywallDismissedRef.current = false;
-      return;
-    }
-
-    let cancelled = false;
-    isOnboardingComplete().then((done) => {
-      if (cancelled) return;
-      if (!done) return;
-      if (!isSubscribed && !paywallDismissedRef.current) {
-        paywallDismissedRef.current = true;
-        router.replace("/paywall");
-      }
-    }).catch(() => {
-      if (cancelled) return;
-      if (!isSubscribed && !paywallDismissedRef.current) {
-        paywallDismissedRef.current = true;
-        router.replace("/paywall");
-      }
-    });
-    return () => { cancelled = true; };
-  }, [isSubscribed, loading, pathname]);
-
-  return null;
-}
 
 export default function RootLayout() {
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
@@ -137,7 +98,6 @@ export default function RootLayout() {
   };
   return (
     <SubscriptionProvider>
-          <SubscriptionRedirect />
   <DevErrorBoundary>
       <StatusBar style="auto" animated />
         <ThemeProvider
