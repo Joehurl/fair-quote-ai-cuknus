@@ -56,7 +56,7 @@ const PLAN_DEFS = [
   {
     key: 'consumable',
     title: 'Single Analysis',
-    price: '$2.00',
+    price: '$5.99',
     period: 'one-time',
     subtitle: 'Pay per use',
     badge: null,
@@ -65,7 +65,7 @@ const PLAN_DEFS = [
   {
     key: 'monthly',
     title: 'Monthly',
-    price: '$1.99',
+    price: '$4.99',
     period: '/month',
     subtitle: 'Billed monthly, cancel anytime',
     badge: null,
@@ -74,9 +74,9 @@ const PLAN_DEFS = [
   {
     key: 'annual',
     title: 'Annual',
-    price: '$20.00',
+    price: '$59.99',
     period: '/year',
-    subtitle: '$1.67/month',
+    subtitle: '$5.00/month',
     badge: 'Best Value',
     rcIdentifier: '$rc_annual',
   },
