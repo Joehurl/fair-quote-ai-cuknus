@@ -9,9 +9,8 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { CheckCircle, AlertCircle, HelpCircle, TrendingDown, Trophy } from 'lucide-react-native';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { analyzeQuote, AnalysisResult } from '@/utils/quoteAnalyzer';
@@ -197,89 +196,6 @@ function ConfidenceBar({ confidence, verdict }: { confidence: number; verdict: A
   );
 }
 
-// ─── Lock Overlay ─────────────────────────────────────────────────────────────
-
-function LockOverlay({ onUnlock }: { onUnlock: () => void }) {
-  return (
-    <View
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        borderRadius: 16,
-        overflow: 'hidden',
-      }}
-      pointerEvents="box-none"
-    >
-      <BlurView
-        intensity={60}
-        tint="light"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
-      />
-      {/* Lock card on top of blur */}
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: 24,
-          gap: 12,
-        }}
-        pointerEvents="box-none"
-      >
-        <Text style={{ fontSize: 36 }}>🔒</Text>
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: '700',
-            color: COLORS.text,
-            textAlign: 'center',
-          }}
-        >
-          Unlock Your Results
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: COLORS.textSecondary,
-            textAlign: 'center',
-            lineHeight: 20,
-          }}
-        >
-          See if your quote is fair, overpriced, or a great deal
-        </Text>
-        <AnimatedPressable
-          onPress={() => {
-            console.log('[AnalyzeScreen] Unlock Results tapped');
-            onUnlock();
-          }}
-          style={{
-            backgroundColor: COLORS.primary,
-            borderRadius: 12,
-            height: 50,
-            paddingHorizontal: 32,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: 4,
-          }}
-        >
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>
-            Unlock Results
-          </Text>
-        </AnimatedPressable>
-      </View>
-    </View>
-  );
-}
-
 // ─── Result Card ──────────────────────────────────────────────────────────────
 
 function ResultCard({
@@ -293,8 +209,6 @@ function ResultCard({
   savedId,
   label,
   isWinner,
-  isLocked,
-  onUnlock,
 }: {
   result: AnalysisResult;
   amount: number;
@@ -306,8 +220,6 @@ function ResultCard({
   savedId: string | null;
   label?: string;
   isWinner?: boolean;
-  isLocked?: boolean;
-  onUnlock?: () => void;
 }) {
   const slideAnim = useRef(new Animated.Value(20)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -331,176 +243,171 @@ function ResultCard({
         transform: [{ translateY: slideAnim }],
       }}
     >
-      <View style={{ overflow: 'hidden', borderRadius: 16 }}>
-        <View
-          style={{
-            backgroundColor: COLORS.surface,
-            borderRadius: 16,
-            padding: 20,
-            borderWidth: isWinner ? 2 : 1,
-            borderColor: isWinner ? COLORS.fair : COLORS.border,
-            gap: 16,
-          }}
-        >
-          {/* Winner badge */}
-          {isWinner && (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                backgroundColor: COLORS.fairMuted,
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 8,
-                alignSelf: 'flex-start',
-              }}
-            >
-              <Trophy size={13} color={COLORS.fair} />
-              <Text style={{ fontSize: 11, fontWeight: '700', color: COLORS.fair, letterSpacing: 0.5 }}>
-                BETTER PRICE
-              </Text>
-            </View>
-          )}
-
-          {/* Label (Quote A / Quote B) */}
-          {label ? (
-            <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.3 }}>
-              {label}
-            </Text>
-          ) : null}
-
-          {/* Header */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <VerdictBadge verdict={result.verdict} />
-            <Text style={{ fontSize: 22, fontWeight: '700', color: COLORS.text }}>
-              ${Number(amount).toLocaleString()}
+      <View
+        style={{
+          backgroundColor: COLORS.surface,
+          borderRadius: 16,
+          padding: 20,
+          borderWidth: isWinner ? 2 : 1,
+          borderColor: isWinner ? COLORS.fair : COLORS.border,
+          gap: 16,
+        }}
+      >
+        {/* Winner badge */}
+        {isWinner && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: COLORS.fairMuted,
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 8,
+              alignSelf: 'flex-start',
+            }}
+          >
+            <Trophy size={13} color={COLORS.fair} />
+            <Text style={{ fontSize: 11, fontWeight: '700', color: COLORS.fair, letterSpacing: 0.5 }}>
+              BETTER PRICE
             </Text>
           </View>
+        )}
 
-          {/* Category */}
-          <Text style={{ fontSize: 13, color: COLORS.textTertiary, fontWeight: '500', marginTop: -8 }}>
-            {result.category}
+        {/* Label (Quote A / Quote B) */}
+        {label ? (
+          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.3 }}>
+            {label}
           </Text>
+        ) : null}
 
-          {/* Confidence */}
-          <ConfidenceBar confidence={result.confidence} verdict={result.verdict} />
+        {/* Header */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <VerdictBadge verdict={result.verdict} />
+          <Text style={{ fontSize: 22, fontWeight: '700', color: COLORS.text }}>
+            ${Number(amount).toLocaleString()}
+          </Text>
+        </View>
 
-          {/* Typical Range */}
-          {result.estimatedLow > 0 && (
-            <View
-              style={{
-                backgroundColor: COLORS.surfaceSecondary,
-                borderRadius: 10,
-                padding: 12,
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' }}>
-                Typical range
-              </Text>
-              <Text style={{ fontSize: 15, fontWeight: '700', color: COLORS.text }}>
-                {rangeText}
+        {/* Category */}
+        <Text style={{ fontSize: 13, color: COLORS.textTertiary, fontWeight: '500', marginTop: -8 }}>
+          {result.category}
+        </Text>
+
+        {/* Confidence */}
+        <ConfidenceBar confidence={result.confidence} verdict={result.verdict} />
+
+        {/* Typical Range */}
+        {result.estimatedLow > 0 && (
+          <View
+            style={{
+              backgroundColor: COLORS.surfaceSecondary,
+              borderRadius: 10,
+              padding: 12,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' }}>
+              Typical range
+            </Text>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: COLORS.text }}>
+              {rangeText}
+            </Text>
+          </View>
+        )}
+
+        {/* Explanation */}
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: COLORS.text }}>
+            Analysis
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              color: COLORS.textSecondary,
+              lineHeight: 21,
+            }}
+          >
+            {result.explanation}
+          </Text>
+        </View>
+
+        {/* Tips */}
+        <View style={{ gap: 8 }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: COLORS.text }}>
+            Tips
+          </Text>
+          {result.tips.map((tip, i) => (
+            <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+              <CheckCircle size={15} color={COLORS.primary} style={{ marginTop: 2 }} />
+              <Text style={{ fontSize: 14, color: COLORS.textSecondary, lineHeight: 20, flex: 1 }}>
+                {tip}
               </Text>
             </View>
-          )}
+          ))}
+        </View>
 
-          {/* Explanation */}
-          <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: COLORS.text }}>
-              Analysis
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: COLORS.textSecondary,
-                lineHeight: 21,
-              }}
-            >
-              {result.explanation}
-            </Text>
-          </View>
+        {/* Divider */}
+        <View style={{ height: 1, backgroundColor: COLORS.divider }} />
 
-          {/* Tips */}
-          <View style={{ gap: 8 }}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: COLORS.text }}>
-              Tips
-            </Text>
-            {result.tips.map((tip, i) => (
-              <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-                <CheckCircle size={15} color={COLORS.primary} style={{ marginTop: 2 }} />
-                <Text style={{ fontSize: 14, color: COLORS.textSecondary, lineHeight: 20, flex: 1 }}>
-                  {tip}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Divider */}
-          <View style={{ height: 1, backgroundColor: COLORS.divider }} />
-
-          {/* Actions */}
-          <View style={{ gap: 10 }}>
-            {!savedId ? (
-              <AnimatedPressable
-                onPress={() => {
-                  console.log('[AnalyzeScreen] Save to History pressed', label ?? 'single');
-                  onSave();
-                }}
-                style={{
-                  backgroundColor: COLORS.primary,
-                  borderRadius: 12,
-                  height: 48,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '600' }}>
-                  Save to History
-                </Text>
-              </AnimatedPressable>
-            ) : (
-              <View
-                style={{
-                  backgroundColor: COLORS.fairMuted,
-                  borderRadius: 12,
-                  height: 48,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                  gap: 6,
-                }}
-              >
-                <CheckCircle size={16} color={COLORS.fair} />
-                <Text style={{ color: COLORS.fair, fontSize: 15, fontWeight: '600' }}>
-                  Saved to History
-                </Text>
-              </View>
-            )}
+        {/* Actions */}
+        <View style={{ gap: 10 }}>
+          {!savedId ? (
             <AnimatedPressable
               onPress={() => {
-                console.log('[AnalyzeScreen] Analyze Another pressed');
-                onAnalyzeAnother();
+                console.log('[AnalyzeScreen] Save to History pressed', label ?? 'single');
+                onSave();
               }}
               style={{
-                backgroundColor: COLORS.surfaceSecondary,
+                backgroundColor: COLORS.primary,
                 borderRadius: 12,
                 height: 48,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ color: COLORS.primary, fontSize: 15, fontWeight: '600' }}>
-                Analyze Another
+              <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '600' }}>
+                Save to History
               </Text>
             </AnimatedPressable>
-          </View>
+          ) : (
+            <View
+              style={{
+                backgroundColor: COLORS.fairMuted,
+                borderRadius: 12,
+                height: 48,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 6,
+              }}
+            >
+              <CheckCircle size={16} color={COLORS.fair} />
+              <Text style={{ color: COLORS.fair, fontSize: 15, fontWeight: '600' }}>
+                Saved to History
+              </Text>
+            </View>
+          )}
+          <AnimatedPressable
+            onPress={() => {
+              console.log('[AnalyzeScreen] Analyze Another pressed');
+              onAnalyzeAnother();
+            }}
+            style={{
+              backgroundColor: COLORS.surfaceSecondary,
+              borderRadius: 12,
+              height: 48,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: COLORS.primary, fontSize: 15, fontWeight: '600' }}>
+              Analyze Another
+            </Text>
+          </AnimatedPressable>
         </View>
-
-        {/* Lock overlay — rendered inside the overflow:hidden wrapper */}
-        {isLocked && onUnlock && <LockOverlay onUnlock={onUnlock} />}
       </View>
     </Animated.View>
   );
@@ -643,8 +550,9 @@ export default function AnalyzeScreen() {
   const [savedIdB, setSavedIdB] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [credits, setCredits] = useState(0);
-  // Whether the result is currently locked (no access at time of analysis)
-  const [resultLocked, setResultLocked] = useState(false);
+
+  // Tracks whether we should auto-run analysis when the screen regains focus
+  const pendingAnalysis = useRef(false);
 
   // Load credits on mount and when subscription changes
   useEffect(() => {
@@ -664,7 +572,6 @@ export default function AnalyzeScreen() {
     setSavedId(null);
     setSavedIdB(null);
     setAmountTextB('');
-    setResultLocked(false);
   }, []);
 
   const handleAnalyze = useCallback(async () => {
@@ -693,16 +600,22 @@ export default function AnalyzeScreen() {
       return;
     }
 
-    // Determine access — analysis always runs; lock state is set based on access
+    // Gate on access — redirect to paywall if no subscription and no credits
     const hasAccess = isSubscribed || credits > 0;
     console.log('[AnalyzeScreen] Access check — hasAccess:', hasAccess, 'isSubscribed:', isSubscribed, 'credits:', credits);
+
+    if (!hasAccess) {
+      console.log('[AnalyzeScreen] No access — setting pendingAnalysis and navigating to paywall');
+      pendingAnalysis.current = true;
+      router.push('/paywall');
+      return;
+    }
 
     setIsAnalyzing(true);
     setResult(null);
     setResultB(null);
     setSavedId(null);
     setSavedIdB(null);
-    setResultLocked(false);
 
     // Simulate a brief "thinking" delay for UX
     await new Promise((resolve) => setTimeout(resolve, 900));
@@ -718,27 +631,30 @@ export default function AnalyzeScreen() {
     }
 
     setIsAnalyzing(false);
+  }, [description, amountText, amountTextB, location, details, isSubscribed, credits, compareMode, router]);
 
-    if (!hasAccess) {
-      console.log('[AnalyzeScreen] No access — locking result');
-      setResultLocked(true);
-    }
-  }, [description, amountText, amountTextB, location, details, isSubscribed, credits, compareMode]);
+  // When the screen regains focus (e.g. after returning from paywall), auto-run
+  // the pending analysis if the user now has access.
+  useFocusEffect(
+    useCallback(() => {
+      if (!pendingAnalysis.current) return;
 
-  // Called when user taps "Unlock Results" on the lock overlay
-  const handleUnlockResults = useCallback(async () => {
-    console.log('[AnalyzeScreen] Unlock Results tapped — credits:', credits, 'isSubscribed:', isSubscribed);
-    if (credits > 0) {
-      console.log('[AnalyzeScreen] Deducting 1 credit to unlock result');
-      const remaining = await deductCredit();
-      setCredits(remaining);
-      console.log('[AnalyzeScreen] Credits remaining after deduction:', remaining);
-      setResultLocked(false);
-    } else {
-      console.log('[AnalyzeScreen] No credits — redirecting to paywall');
-      router.push('/paywall');
-    }
-  }, [credits, isSubscribed, router]);
+      getCredits().then((freshCredits) => {
+        setCredits(freshCredits);
+        const nowHasAccess = isSubscribed || freshCredits > 0;
+        console.log('[AnalyzeScreen] Screen focused after paywall — nowHasAccess:', nowHasAccess, 'isSubscribed:', isSubscribed, 'credits:', freshCredits);
+
+        if (nowHasAccess) {
+          pendingAnalysis.current = false;
+          console.log('[AnalyzeScreen] Auto-running pending analysis after paywall return');
+          handleAnalyze();
+        } else {
+          console.log('[AnalyzeScreen] Still no access after returning from paywall — clearing pending flag');
+          pendingAnalysis.current = false;
+        }
+      });
+    }, [isSubscribed, handleAnalyze])
+  );
 
   const handleSave = useCallback(async (which: 'A' | 'B' = 'A') => {
     const targetResult = which === 'A' ? result : resultB;
@@ -781,7 +697,6 @@ export default function AnalyzeScreen() {
     setResultB(null);
     setSavedId(null);
     setSavedIdB(null);
-    setResultLocked(false);
   }, []);
 
   const inputStyle = (field: string) => ({
@@ -1085,8 +1000,6 @@ export default function AnalyzeScreen() {
             onSave={() => handleSave('A')}
             onAnalyzeAnother={handleAnalyzeAnother}
             savedId={savedId}
-            isLocked={resultLocked}
-            onUnlock={handleUnlockResults}
           />
         )}
 
@@ -1104,8 +1017,6 @@ export default function AnalyzeScreen() {
               savedId={savedId}
               label="Quote A"
               isWinner={winner === 'A'}
-              isLocked={resultLocked}
-              onUnlock={handleUnlockResults}
             />
             <ResultCard
               result={resultB}
@@ -1118,8 +1029,6 @@ export default function AnalyzeScreen() {
               savedId={savedIdB}
               label="Quote B"
               isWinner={winner === 'B'}
-              isLocked={resultLocked}
-              onUnlock={handleUnlockResults}
             />
           </View>
         )}
