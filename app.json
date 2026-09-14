@@ -71,8 +71,8 @@
     },
     "extra": {
       "router": {},
-      "revenueCatApiKeyIos": "test_yUKeYavqkxvhpInSzsvVFAWJMSj",
-      "revenueCatApiKeyAndroid": "test_yUKeYavqkxvhpInSzsvVFAWJMSj",
+      "revenueCatApiKeyIos": "appl_yMCwuRHAeYdnVZMkUYKDYBVHiBD",
+      "revenueCatApiKeyAndroid": "goog_RJZPVqmtkzTUYInqxcFwfTahTLv",
       "revenueCatEntitlementId": "pto",
       "oneSignalAppId": "d6b732f7-1228-450f-b68d-0faee205ff37"
     }
