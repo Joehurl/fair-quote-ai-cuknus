@@ -35,10 +35,7 @@
         ]
       },
       "entitlements": {
-        "aps-environment": "production",
-        "com.apple.security.application-groups": [
-          "group.com.fairquoteai.app.onesignal"
-        ]
+        "aps-environment": "production"
       }
     },
     "android": {
