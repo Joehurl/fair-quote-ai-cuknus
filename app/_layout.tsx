@@ -17,6 +17,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 // Note: Error logging is auto-initialized via index.ts import
 
@@ -97,7 +98,8 @@ export default function RootLayout() {
     },
   };
   return (
-    <SubscriptionProvider>
+    <NotificationProvider>
+  <SubscriptionProvider>
   <DevErrorBoundary>
       <StatusBar style="auto" animated />
         <ThemeProvider
@@ -129,6 +131,15 @@ export default function RootLayout() {
                     headerShown: false,
                   }}
                 />
+                {/* Notification preferences */}
+                <Stack.Screen
+                  name="notification-preferences"
+                  options={{
+                    title: 'Notification Preferences',
+                    headerShown: true,
+                    presentation: 'card',
+                  }}
+                />
               </Stack>
               <SystemBars style={"auto"} />
               </GestureHandlerRootView>
@@ -137,5 +148,6 @@ export default function RootLayout() {
         </ThemeProvider>
     </DevErrorBoundary>
     </SubscriptionProvider>
+    </NotificationProvider>
   );
 }

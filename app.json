@@ -16,7 +16,10 @@
       "bundleIdentifier": "com.fairquoteai.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "FairQuote AI uses your location to provide accurate local market pricing for service quotes in your area."
+        "NSLocationWhenInUseUsageDescription": "FairQuote AI uses your location to provide accurate local market pricing for service quotes in your area.",
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       },
       "privacyManifests": {
         "NSPrivacyTracking": false,
@@ -29,6 +32,12 @@
               "CA92.1"
             ]
           }
+        ]
+      },
+      "entitlements": {
+        "aps-environment": "production",
+        "com.apple.security.application-groups": [
+          "group.com.fairquoteai.app.onesignal"
         ]
       }
     },
@@ -48,6 +57,12 @@
       "bundler": "metro"
     },
     "plugins": [
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "production"
+        }
+      ],
       "expo-font",
       "expo-router",
       "expo-web-browser",
@@ -61,7 +76,8 @@
       "router": {},
       "revenueCatApiKeyIos": "test_yUKeYavqkxvhpInSzsvVFAWJMSj",
       "revenueCatApiKeyAndroid": "test_yUKeYavqkxvhpInSzsvVFAWJMSj",
-      "revenueCatEntitlementId": "pto"
+      "revenueCatEntitlementId": "pto",
+      "oneSignalAppId": "d6b732f7-1228-450f-b68d-0faee205ff37"
     }
   }
 }

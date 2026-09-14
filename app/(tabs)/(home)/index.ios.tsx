@@ -17,6 +17,7 @@ import {
   Tag,
 } from 'lucide-react-native';
 import { loadQuotes, SavedQuote } from '@/utils/storage';
+import { NotificationBell } from "@/components/NotificationBell";
 
 const COLORS = {
   background: '#F0F4F8',
@@ -125,7 +126,9 @@ export default function HomeScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
+                <NotificationBell />
+        
+{/* Header */}
         <View
           style={{
             backgroundColor: COLORS.primary,
