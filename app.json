@@ -65,6 +65,9 @@
       "expo-web-browser",
       "expo-secure-store"
     ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "scheme": "fairquoteai",
     "experiments": {
       "typedRoutes": true
