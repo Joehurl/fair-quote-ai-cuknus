@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import {
@@ -15,6 +16,7 @@ import {
   BarChart2,
   Percent,
   Tag,
+  Play,
 } from 'lucide-react-native';
 import { loadQuotes, SavedQuote } from '@/utils/storage';
 import { NotificationBell } from "@/components/NotificationBell";
@@ -112,6 +114,11 @@ export default function HomeScreen() {
       pathname: '/quote-detail',
       params: { quoteId: quote.id, quoteData: JSON.stringify(quote) },
     });
+  };
+
+  const handleWatchDemo = () => {
+    console.log('[HomeScreen] Watch Demo Video pressed — opening URL: https://youtu.be/f2TCRUn0688');
+    Linking.openURL('https://youtu.be/f2TCRUn0688');
   };
 
   return (
@@ -447,6 +454,57 @@ export default function HomeScreen() {
               </View>
             ))}
           </ScrollView>
+        </View>
+
+        {/* How It Works */}
+        <View style={{ gap: 8 }}>
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: '600',
+              color: COLORS.textTertiary,
+              letterSpacing: 0.6,
+              paddingHorizontal: 4,
+            }}
+          >
+            HOW IT WORKS
+          </Text>
+          <TouchableOpacity
+            onPress={handleWatchDemo}
+            activeOpacity={0.8}
+            style={{
+              backgroundColor: COLORS.surface,
+              borderRadius: 14,
+              borderWidth: 1,
+              borderColor: COLORS.border,
+              padding: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 14,
+            }}
+          >
+            <View
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                backgroundColor: COLORS.primaryMuted,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Play size={20} color={COLORS.primary} />
+            </View>
+            <View style={{ flex: 1, gap: 3 }}>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: COLORS.text }}>
+                Watch Demo Video
+              </Text>
+              <Text style={{ fontSize: 13, color: COLORS.textSecondary }}>
+                See how FairQuote AI works
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
