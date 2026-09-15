@@ -35,7 +35,10 @@
         ]
       },
       "entitlements": {
-        "aps-environment": "production"
+        "aps-environment": "production",
+        "com.apple.security.application-groups": [
+          "group.com.fairquoteai.app.onesignal"
+        ]
       }
     },
     "android": {
@@ -57,7 +60,8 @@
       [
         "onesignal-expo-plugin",
         {
-          "mode": "production"
+          "mode": "production",
+          "devTeam": "L329NSWTT5"
         }
       ],
       "expo-font",
