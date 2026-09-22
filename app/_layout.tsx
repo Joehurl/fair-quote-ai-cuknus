@@ -69,10 +69,6 @@ export default function RootLayout() {
     }
   }, [networkState.isConnected, networkState.isInternetReachable]);
 
-  if (onboardingComplete === null) {
-    return null;
-  }
-
   const CustomDefaultTheme: Theme = {
     ...DefaultTheme,
     dark: false,
@@ -108,39 +104,43 @@ export default function RootLayout() {
           <SafeAreaProvider>
             <WidgetProvider>
               <GestureHandlerRootView>
-              {onboardingComplete === false && pathname !== "/auth" && pathname !== "/paywall" && pathname !== "/auth-popup" && pathname !== "/auth-callback" && <Redirect href="/onboarding" />}
+              {onboardingComplete === null ? null : (
+                <>
+                  {onboardingComplete === false && pathname !== "/auth" && pathname !== "/paywall" && pathname !== "/auth-popup" && pathname !== "/auth-callback" && <Redirect href="/onboarding" />}
 
-              <Stack>
-                {/* Main app with tabs */}
-                <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+                  <Stack>
+                    {/* Main app with tabs */}
+                    <Stack.Screen name="onboarding" options={{ headerShown: false }} />
 
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                {/* Paywall modal */}
-                <Stack.Screen
-                  name="paywall"
-                  options={{
-                    presentation: 'formSheet',
-                    headerShown: false,
-                  }}
-                />
-                {/* Quote detail modal */}
-                <Stack.Screen
-                  name="quote-detail"
-                  options={{
-                    presentation: 'formSheet',
-                    headerShown: false,
-                  }}
-                />
-                {/* Notification preferences */}
-                <Stack.Screen
-                  name="notification-preferences"
-                  options={{
-                    title: 'Notification Preferences',
-                    headerShown: true,
-                    presentation: 'card',
-                  }}
-                />
-              </Stack>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    {/* Paywall modal */}
+                    <Stack.Screen
+                      name="paywall"
+                      options={{
+                        presentation: 'formSheet',
+                        headerShown: false,
+                      }}
+                    />
+                    {/* Quote detail modal */}
+                    <Stack.Screen
+                      name="quote-detail"
+                      options={{
+                        presentation: 'formSheet',
+                        headerShown: false,
+                      }}
+                    />
+                    {/* Notification preferences */}
+                    <Stack.Screen
+                      name="notification-preferences"
+                      options={{
+                        title: 'Notification Preferences',
+                        headerShown: true,
+                        presentation: 'card',
+                      }}
+                    />
+                  </Stack>
+                </>
+              )}
               <SystemBars style={"auto"} />
               </GestureHandlerRootView>
             </WidgetProvider>
