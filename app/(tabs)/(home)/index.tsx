@@ -21,6 +21,54 @@ import {
 import { loadQuotes, SavedQuote } from '@/utils/storage';
 import { NotificationBell } from "@/components/NotificationBell";
 
+const DEMO_QUOTES: SavedQuote[] = [
+  {
+    id: 'demo_1',
+    description: 'Replace kitchen faucet',
+    amount: 350,
+    verdict: 'fair',
+    category: 'Plumbing',
+    confidence: 82,
+    location: '',
+    details: '',
+    explanation: 'Demo entry',
+    tips: [],
+    estimatedLow: 0,
+    estimatedHigh: 0,
+    analyzedAt: new Date().toISOString(),
+  },
+  {
+    id: 'demo_2',
+    description: 'Paint living room walls',
+    amount: 1200,
+    verdict: 'overpriced',
+    category: 'Painting',
+    confidence: 74,
+    location: '',
+    details: '',
+    explanation: 'Demo entry',
+    tips: [],
+    estimatedLow: 0,
+    estimatedHigh: 0,
+    analyzedAt: new Date().toISOString(),
+  },
+  {
+    id: 'demo_3',
+    description: 'AC unit tune-up',
+    amount: 89,
+    verdict: 'underpriced',
+    category: 'HVAC',
+    confidence: 91,
+    location: '',
+    details: '',
+    explanation: 'Demo entry',
+    tips: [],
+    estimatedLow: 0,
+    estimatedHigh: 0,
+    analyzedAt: new Date().toISOString(),
+  },
+];
+
 const COLORS = {
   background: '#F0F4F8',
   surface: '#FFFFFF',
@@ -148,7 +196,7 @@ export default function HomeScreen() {
             FairQuote AI
           </Text>
           <Text style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', fontWeight: '400' }}>
-            Know before you pay.
+            Know if your contractor quote is fair before you pay.
           </Text>
           <TouchableOpacity
             onPress={handleAnalyzeCTA}
@@ -295,17 +343,34 @@ export default function HomeScreen() {
 
         {/* Recent Quotes */}
         <View style={{ gap: 8 }}>
-          <Text
-            style={{
-              fontSize: 12,
-              fontWeight: '600',
-              color: COLORS.textTertiary,
-              letterSpacing: 0.6,
-              paddingHorizontal: 4,
-            }}
-          >
-            RECENT QUOTES
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 }}>
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: '600',
+                color: COLORS.textTertiary,
+                letterSpacing: 0.6,
+              }}
+            >
+              RECENT QUOTES
+            </Text>
+            {!loading && recentQuotes.length === 0 && (
+              <View
+                style={{
+                  backgroundColor: COLORS.surfaceSecondary,
+                  borderRadius: 5,
+                  paddingHorizontal: 7,
+                  paddingVertical: 2,
+                  borderWidth: 1,
+                  borderColor: COLORS.border,
+                }}
+              >
+                <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textTertiary, letterSpacing: 0.5 }}>
+                  DEMO
+                </Text>
+              </View>
+            )}
+          </View>
 
           {loading ? (
             <View
@@ -321,30 +386,80 @@ export default function HomeScreen() {
               <ActivityIndicator color={COLORS.primary} />
             </View>
           ) : recentQuotes.length === 0 ? (
-            <View
-              style={{
-                backgroundColor: COLORS.surface,
-                borderRadius: 14,
-                padding: 28,
-                alignItems: 'center',
-                borderWidth: 1,
-                borderColor: COLORS.border,
-                gap: 8,
-              }}
-            >
-              <Text style={{ fontSize: 32 }}>📋</Text>
-              <Text style={{ fontSize: 15, fontWeight: '600', color: COLORS.text }}>
-                No quotes yet
-              </Text>
+            <View style={{ gap: 8 }}>
+              {DEMO_QUOTES.map((quote) => {
+                const config = verdictConfig(quote.verdict);
+                const Icon = config.Icon;
+                const amountText = `$${Number(quote.amount).toLocaleString()}`;
+                return (
+                  <View
+                    key={quote.id}
+                    style={{
+                      backgroundColor: COLORS.surface,
+                      borderRadius: 14,
+                      padding: 14,
+                      borderWidth: 1,
+                      borderColor: COLORS.border,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 12,
+                      opacity: 0.75,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 10,
+                        backgroundColor: config.bg,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Icon size={18} color={config.color} />
+                    </View>
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <Text
+                        style={{ fontSize: 14, fontWeight: '600', color: COLORS.text }}
+                        numberOfLines={1}
+                      >
+                        {quote.description}
+                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <View
+                          style={{
+                            backgroundColor: config.bg,
+                            paddingHorizontal: 6,
+                            paddingVertical: 2,
+                            borderRadius: 5,
+                          }}
+                        >
+                          <Text style={{ fontSize: 10, fontWeight: '600', color: config.color }}>
+                            {config.label}
+                          </Text>
+                        </View>
+                        <Text style={{ fontSize: 11, color: COLORS.textTertiary }}>
+                          {quote.category}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: COLORS.text }}>
+                      {amountText}
+                    </Text>
+                  </View>
+                );
+              })}
               <Text
                 style={{
-                  fontSize: 13,
-                  color: COLORS.textSecondary,
+                  fontSize: 12,
+                  color: COLORS.textTertiary,
                   textAlign: 'center',
-                  lineHeight: 19,
+                  fontStyle: 'italic',
+                  paddingTop: 2,
                 }}
               >
-                Tap "Analyze a Quote" above to get started
+                Demo data — analyze your first quote above
               </Text>
             </View>
           ) : (

@@ -360,6 +360,11 @@ export default function PaywallScreen() {
             ))}
           </View>
 
+          {/* No account required note */}
+          <View style={styles.noAccountNote}>
+            <Text style={styles.noAccountText}>🔒 No account required · Cancel anytime in Settings</Text>
+          </View>
+
           {/* Plan cards */}
           <View style={styles.plansContainer}>
             {PLAN_DEFS.map((plan) => {
@@ -636,6 +641,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.3,
+  },
+
+  // No account note
+  noAccountNote: {
+    alignItems: 'center',
+    marginTop: -8,
+  },
+  noAccountText: {
+    fontSize: 13,
+    color: COLORS.textTertiary,
+    textAlign: 'center',
   },
 
   // No packages

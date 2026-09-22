@@ -8,7 +8,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { ChevronRight, Info, Star, Trash2, X, CheckCircle, BarChart2, Shield, Crown, RefreshCw, XCircle, Copyright, ShieldCheck } from 'lucide-react-native';
+import { ChevronRight, Info, Star, Trash2, X, CheckCircle, BarChart2, Shield, Crown, RefreshCw, XCircle, Copyright, ShieldCheck, MessageCircle } from 'lucide-react-native';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { clearAllQuotes } from '@/utils/storage';
 import { getCredits } from '@/utils/creditsStorage';
@@ -516,6 +516,17 @@ export default function SettingsScreen() {
             icon={<Shield size={16} color={COLORS.primary} />}
             label="Privacy Policy"
             onPress={handlePrivacyPolicy}
+          />
+          <Divider />
+          <SettingsRow
+            icon={<MessageCircle size={16} color={COLORS.primary} />}
+            label="Contact Support"
+            onPress={() => {
+              console.log('[Settings] Contact Support pressed');
+              Linking.openURL('https://forms.gle/support').catch(() => {
+                console.log('[Settings] Could not open support URL');
+              });
+            }}
           />
           <Divider />
           <SettingsRow

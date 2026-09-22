@@ -1032,6 +1032,30 @@ export default function AnalyzeScreen() {
             />
           </View>
         )}
+
+        {/* Disclaimer banner */}
+        <View
+          style={{
+            alignSelf: 'center',
+            backgroundColor: 'rgba(203, 213, 224, 0.35)',
+            borderRadius: 20,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderWidth: 1,
+            borderColor: 'rgba(160, 174, 192, 0.4)',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              color: COLORS.textTertiary,
+              textAlign: 'center',
+              lineHeight: 17,
+            }}
+          >
+            Estimates based on national averages. Always get multiple quotes.
+          </Text>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
