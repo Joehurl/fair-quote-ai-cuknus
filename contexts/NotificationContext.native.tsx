@@ -23,8 +23,20 @@ import React, {
   ReactNode,
 } from "react";
 import { Platform } from "react-native";
-import { OneSignal, NotificationWillDisplayEvent } from "react-native-onesignal";
 import Constants from "expo-constants";
+
+// Safely require OneSignal — the native module is not available in Expo Go / simulator
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let OneSignal: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type NotificationWillDisplayEvent = any;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mod = require("react-native-onesignal");
+  OneSignal = mod.OneSignal;
+} catch {
+  console.warn("[OneSignal] Native module not available (Expo Go / simulator). Push notifications will be disabled.");
+}
 
 // Read App ID from app.json (expo.extra)
 const extra = Constants.expoConfig?.extra || {};
@@ -78,6 +90,12 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         "[OneSignal] App ID not provided. " +
         "Please add oneSignalAppId to app.json extra."
       );
+      setLoading(false);
+      return;
+    }
+
+    if (!OneSignal) {
+      console.warn("[OneSignal] Skipping initialization — native module unavailable.");
       setLoading(false);
       return;
     }
